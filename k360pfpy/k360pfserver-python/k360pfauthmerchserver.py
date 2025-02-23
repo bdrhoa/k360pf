@@ -401,6 +401,16 @@ def build_payload(incoming_data: dict) -> dict:
                     "emailAddress": transaction.get("billingPerson", {}).get("email"),
                     "address": transaction.get("billingPerson", {}).get("address") if isinstance(transaction.get("billingPerson", {}).get("address"), dict) else None,
                 } if isinstance(transaction.get("billingPerson"), dict) else None,
+                "transactionStatus": transaction.get("transaction_status"),
+                "authorizationStatus":{
+                    "authResult": transaction.get("authorizationStatus", {}).get("authResult"),
+                    "dateTime": transaction.get("authorizationStatus", {}).get("dateTime"),
+                    "verificationResponse": {
+                        "cvvStatus": transaction.get("authorizationStatus", {}).get("verificationResponse", {}).get("cvvStatus"),
+                        "avsStatus": transaction.get("authorizationStatus", {}).get("verificationResponse", {}).get("avsStatus"),
+                    } if isinstance(transaction.get("authorizationStatus", {}).get("verificationResponse"), dict) else None,
+                } if isinstance(transaction.get("authorizationStatus"), dict) else None,
+                "merchantTransactionId": transaction.get("merchant_transaction_id"),
                 "items": [
                     {
                         "id": item.get("id"),
@@ -498,18 +508,16 @@ async def process_transaction(request: Request):
         decision = response.get("order", {}).get("riskInquiry", {}).get("decision", "UNKNOWN")
         kount_order_id = response.get("order", {}).get("orderId", "UNKNOWN")
         session_id = response.get("order", {}).get("deviceSessionId", "UNKNOWN")
-        # Set is_pre_auth based on whether transactions array is empty
-        is_pre_auth = True if not response["order"]["transactions"] else False
-        is_pre_auth = False
+        auth_result = payload.get("transactions", [{}])[0].get("authorizationStatus", {}).get("authResult")
+        is_pre_auth = auth_result is None or auth_result == ""
         if (
             is_pre_auth 
             and kount_order_id != "UNKNOWN" 
             and session_id != "UNKNOWN"
-            and (decision == "APPROVE" or decision == "REVIEW")
+            and decision in {"APPROVE","REVIEW"}
         ):
             # Schedule the coroutine to run concurrently, without waiting
-            print("Scheduling patch_credit_card_authorization")
-            asyncio.create_task(patch_credit_card_authorization(kount_order_id))        
+            asyncio.create_task(patch_credit_card_authorization(kount_order_id))     
         return JSONResponse(content=response)
     except HTTPException as e:
         logging.error("HTTPException: %s", e.detail)
@@ -571,5 +579,5 @@ async def patch_credit_card_authorization(order_id: str):
                 print("Authorization response:", the_repsonse)
                 return the_repsonse
         except Exception as e:
-            logging.error("Failed to post authorization: %s", e)
-            raise HTTPException(status_code=500, detail=f"Failed to post authorization: {e}") from e
+            logging.error("Failed to patch authorization: %s", e)
+            raise HTTPException(status_code=500, detail=f"Failed to patch authorization: {e}") from e
