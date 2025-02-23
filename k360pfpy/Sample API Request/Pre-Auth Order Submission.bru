@@ -1,0 +1,82 @@
+meta {
+  name: Pre-Auth Order Submission
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://127.0.0.1:8000/process-transaction
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+    {
+      "order_id": "{{merchantOrderID}}",
+      "channel": "WEB",
+      "device_session_id": "{{KountSess}}",
+      "creation_datetime": "2025-02-12T15:45:30.123Z",
+      "user_ip": "192.168.1.1",
+      "account_id": "user-001",
+      "account_type": "VIP",
+      "account_creation_datetime": "2024-01-10T10:15:30.000Z",
+      "username": "testuser",
+      "account_is_active": true,
+      "items": [
+          {
+              "price": "1000",
+              "description": "High-end gaming mouse",
+              "name": "GamerMouseX",
+              "quantity": 2,
+              "category": "Electronics",
+              "sub_category": "Peripherals",
+              "is_digital": false,
+              "sku": "GMX-2024",
+              "upc": "123456789012",
+              "brand": "Logitech",
+              "url": "https://example.com/gamermousex",
+              "image_url": "https://example.com/images/gamermousex.jpg",
+              "color": "Black",
+              "size": "Medium",
+              "weight": "200g",
+              "height": "5cm",
+              "width": "10cm",
+              "depth": "3cm",
+              "descriptors": ["ergonomic", "RGB", "wireless"],
+              "item_id": "itm-001",
+              "is_service": false
+          },
+          {
+              "price": "5000",
+              "description": "Annual subscription for software",
+              "name": "ProSuite License",
+              "quantity": 1,
+              "category": "Software",
+              "sub_category": "Subscriptions",
+              "is_digital": true,
+              "sku": "PRO-SUITE-1YR",
+              "upc": null,
+              "brand": "Adobe",
+              "url": "https://example.com/prosuite",
+              "image_url": "https://example.com/images/prosuite.jpg",
+              "item_id": "itm-002",
+              "is_service": false
+          }
+      ],
+      "custom_fields": {
+          "specialInstruction": "Leave at the front door",
+          "giftWrap": true
+      }
+  }
+}
+
+script:pre-request {
+  const { nanoid } = require("nanoid")
+  bru.setVar("merchantOrderID", nanoid());
+  bru.setVar('KountSess', require("uuid").v4());
+  
+}
