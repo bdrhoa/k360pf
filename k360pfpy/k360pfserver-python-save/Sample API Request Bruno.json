@@ -1,0 +1,46 @@
+{
+  "name": "Sample API Request",
+  "version": "1",
+  "items": [
+    {
+      "type": "http",
+      "name": "Full Order Submission",
+      "seq": 3,
+      "request": {
+        "url": "http://127.0.0.1:8000/process-transaction",
+        "method": "POST",
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "body": {
+          "mode": "json",
+          "json": "  {\n    \"order_id\": \"{{merchantOrderID}}\",\n    \"channel\": \"WEB\",\n    \"device_session_id\": \"{{KountSess}}\",\n    \"creation_datetime\": \"2025-02-12T15:45:30.123Z\",\n    \"user_ip\": \"192.168.1.1\",\n    \"account_id\": \"user-001\",\n    \"account_type\": \"VIP\",\n    \"account_creation_datetime\": \"2024-01-10T10:15:30.000Z\",\n    \"username\": \"testuser\",\n    \"account_is_active\": true,\n    \"items\": [\n        {\n            \"price\": \"1000\",\n            \"description\": \"High-end gaming mouse\",\n            \"name\": \"GamerMouseX\",\n            \"quantity\": 2,\n            \"category\": \"Electronics\",\n            \"sub_category\": \"Peripherals\",\n            \"is_digital\": false,\n            \"sku\": \"GMX-2024\",\n            \"upc\": \"123456789012\",\n            \"brand\": \"Logitech\",\n            \"url\": \"https://example.com/gamermousex\",\n            \"image_url\": \"https://example.com/images/gamermousex.jpg\",\n            \"color\": \"Black\",\n            \"size\": \"Medium\",\n            \"weight\": \"200g\",\n            \"height\": \"5cm\",\n            \"width\": \"10cm\",\n            \"depth\": \"3cm\",\n            \"descriptors\": [\"ergonomic\", \"RGB\", \"wireless\"],\n            \"item_id\": \"itm-001\",\n            \"is_service\": false\n        },\n        {\n            \"price\": \"5000\",\n            \"description\": \"Annual subscription for software\",\n            \"name\": \"ProSuite License\",\n            \"quantity\": 1,\n            \"category\": \"Software\",\n            \"sub_category\": \"Subscriptions\",\n            \"is_digital\": true,\n            \"sku\": \"PRO-SUITE-1YR\",\n            \"upc\": null,\n            \"brand\": \"Adobe\",\n            \"url\": \"https://example.com/prosuite\",\n            \"image_url\": \"https://example.com/images/prosuite.jpg\",\n            \"item_id\": \"itm-002\",\n            \"is_service\": false\n        }\n    ],\n    \"fulfillment\": [\n        {\n            \"type\": \"SHIPPED\",\n            \"shipping\": {\n                \"amount\": \"150\",\n                \"provider\": \"UPS\",\n                \"tracking_number\": \"1Z9999999999999999\",\n                \"method\": \"EXPRESS\"\n            },\n            \"recipient\": {\n                \"first\": \"John\",\n                \"family\": \"Doe\",\n                \"phone_number\": \"+15551234567\",\n                \"email_address\": \"john.doe@example.com\",\n                \"address\": {\n                    \"line1\": \"1234 Elm Street\",\n                    \"line2\": \"Apt 56\",\n                    \"city\": \"Los Angeles\",\n                    \"region\": \"CA\",\n                    \"postal_code\": \"90001\",\n                    \"country_code\": \"US\"\n                }\n            },\n            \"merchant_fulfillment_id\": \"FULF-001\",\n            \"digital_downloaded\": false\n        },\n        {\n            \"type\": \"DIGITAL\",\n            \"accessUrl\": \"https://downloads.example.com/prosuite\",\n            \"merchant_fulfillment_id\": \"FULF-002\",\n            \"digital_downloaded\": true\n        }\n    ],\n    \"transactions\": [\n        {\n            \"processor\": \"PayPal\",\n            \"processor_merchant_id\": \"MERCH123\",\n            \"payment\": {\n                \"type\": \"PYPL\",\n                \"payment_token\": \"TOKEN123456\",\n                \"bin\": \"411111\",\n                \"last4\": \"1111\"\n            },\n            \"subtotal\": \"6000\",\n            \"order_total\": \"6150\",\n            \"currency\": \"USD\",\n            \"tax\": {\n                \"is_taxable\": true,\n                \"taxable_country_code\": \"US\",\n                \"tax_amount\": \"100\",\n                \"out_of_state_tax_amount\": \"50\"\n            },\n            \"billingPerson\": {\n              \"name\": {\n                \"first\": \"William\",\n                \"preferred\": \"Bill\",\n                \"family\": \"Andrade\",\n                \"middle\": \"Alexander\",\n                \"prefix\": \"Ms.\",\n                \"suffix\": \"III\"\n              },\n              \"phone\": \"+15555555555\",\n              \"email\": \"john.doe@example.com\",\n              \"address\": {\n                  \"line1\": \"123 Main St\",\n                  \"line2\": \"Apt 4B\",\n                  \"city\": \"New York\",\n                  \"region\": \"NY\",\n                  \"postal_code\": \"10001\",\n                  \"country_code\": \"US\"\n                }\n            },\n            \"merchant_transaction_id\": \"TXN-789\"\n        },\n        {\n            \"processor\": \"Stripe\",\n            \"processor_merchant_id\": \"STRIPE-987\",\n            \"payment\": {\n                \"type\": \"CREDIT_CARD\",\n                \"payment_token\": \"TOKEN654321\",\n                \"bin\": \"550000\",\n                \"last4\": \"2222\"\n            },\n            \"subtotal\": \"5000\",\n            \"order_total\": \"5100\",\n            \"currency\": \"USD\",\n            \"tax\": {\n                \"is_taxable\": true,\n                \"taxable_country_code\": \"US\",\n                \"tax_amount\": \"100\"\n            },\n\n            \"merchant_transaction_id\": \"TXN-456\"\n        }\n    ],\n    \"custom_fields\": {\n        \"specialInstruction\": \"Leave at the front door\",\n        \"giftWrap\": true\n    }\n}",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "auth": {
+          "mode": "none",
+          "basic": {
+            "username": "",
+            "password": ""
+          },
+          "bearer": {
+            "token": ""
+          }
+        },
+        "script": {
+          "req": "const moment = require(\"moment\");\nbru.setVar(\"merchantOrderID\", moment());\nbru.setVar('KountSess', require(\"uuid\").v4());\n"
+        },
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "query": []
+      }
+    }
+  ],
+  "environments": []
+}
