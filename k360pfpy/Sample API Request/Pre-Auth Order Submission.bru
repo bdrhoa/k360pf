@@ -1,7 +1,7 @@
 meta {
   name: Pre-Auth Order Submission
   type: http
-  seq: 3
+  seq: 4
 }
 
 post {
@@ -67,6 +67,101 @@ body:json {
               "is_service": false
           }
       ],
+      "fulfillment": [
+          {
+              "type": "SHIPPED",
+              "shipping": {
+                  "amount": "150",
+                  "provider": "UPS",
+                  "tracking_number": "1Z9999999999999999",
+                  "method": "EXPRESS"
+              },
+              "recipient": {
+                  "first": "John",
+                  "family": "Doe",
+                  "phone_number": "+15551234567",
+                  "email_address": "john.doe@example.com",
+                  "address": {
+                      "line1": "1234 Elm Street",
+                      "line2": "Apt 56",
+                      "city": "Los Angeles",
+                      "region": "CA",
+                      "postal_code": "90001",
+                      "country_code": "US"
+                  }
+              },
+              "merchant_fulfillment_id": "FULF-001",
+              "digital_downloaded": false
+          },
+          {
+              "type": "DIGITAL",
+              "accessUrl": "https://downloads.example.com/prosuite",
+              "merchant_fulfillment_id": "FULF-002",
+              "digital_downloaded": true
+          }
+      ],
+      "transactions": [
+          {
+              "processor": "PayPal",
+              "processor_merchant_id": "MERCH123",
+              "payment": {
+                  "type": "PYPL",
+                  "payment_token": "TOKEN123456",
+                  "bin": "411111",
+                  "last4": "1111"
+              },
+              "subtotal": "6000",
+              "order_total": "6150",
+              "currency": "USD",
+              "tax": {
+                  "is_taxable": true,
+                  "taxable_country_code": "US",
+                  "tax_amount": "100",
+                  "out_of_state_tax_amount": "50"
+              },
+              "billingPerson": {
+                "name": {
+                  "first": "William",
+                  "preferred": "Bill",
+                  "family": "Andrade",
+                  "middle": "Alexander",
+                  "prefix": "Ms.",
+                  "suffix": "III"
+                },
+                "phone": "+15555555555",
+                "email": "john.doe@example.com",
+                "address": {
+                    "line1": "123 Main St",
+                    "line2": "Apt 4B",
+                    "city": "New York",
+                    "region": "NY",
+                    "postal_code": "10001",
+                    "country_code": "US"
+                  }
+              },
+              "merchant_transaction_id": "TXN-789"
+          },
+          {
+              "processor": "Stripe",
+              "processor_merchant_id": "STRIPE-987",
+              "payment": {
+                  "type": "CREDIT_CARD",
+                  "payment_token": "TOKEN654321",
+                  "bin": "550000",
+                  "last4": "2222"
+              },
+              "subtotal": "5000",
+              "order_total": "5100",
+              "currency": "USD",
+              "tax": {
+                  "is_taxable": true,
+                  "taxable_country_code": "US",
+                  "tax_amount": "100"
+              },
+  
+              "merchant_transaction_id": "TXN-456"
+          }
+      ],
       "custom_fields": {
           "specialInstruction": "Leave at the front door",
           "giftWrap": true
@@ -76,7 +171,7 @@ body:json {
 
 script:pre-request {
   const { nanoid } = require("nanoid")
-  bru.setVar("merchantOrderID", nanoid());
+  bru.setVar("merchantOrderID", nanoid().replace(/[_-]/g, 'X'));
   bru.setVar('KountSess', require("uuid").v4());
   
 }
