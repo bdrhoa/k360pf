@@ -198,7 +198,6 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
-
 class TokenManager:
     """
     Singleton class to manage access tokens for authentication.
@@ -406,9 +405,9 @@ def build_payload(incoming_data: dict) -> dict:
                     "authResult": transaction.get("authorizationStatus", {}).get("authResult"),
                     "dateTime": transaction.get("authorizationStatus", {}).get("dateTime"),
                     "verificationResponse": {
-                        "cvvStatus": transaction.get("authorizationStatus", {}).get("verificationResponse", {}).get("cvvStatus"),
-                        "avsStatus": transaction.get("authorizationStatus", {}).get("verificationResponse", {}).get("avsStatus"),
-                    } if isinstance(transaction.get("authorizationStatus", {}).get("verificationResponse"), dict) else None,
+                        "cvvStatus": transaction.get("verificationResponse", {}).get("verificationResponse", {}).get("cvvStatus"),
+                        "avsStatus": transaction.get("verificationResponse", {}).get("verificationResponse", {}).get("avsStatus"),
+                    } if isinstance(transaction.get("verificationResponse", {}).get("verificationResponse"), dict) else None,
                 } if isinstance(transaction.get("authorizationStatus"), dict) else None,
                 "merchantTransactionId": transaction.get("merchant_transaction_id"),
                 "items": [
@@ -508,8 +507,15 @@ async def process_transaction(request: Request):
         decision = response.get("order", {}).get("riskInquiry", {}).get("decision", "UNKNOWN")
         kount_order_id = response.get("order", {}).get("orderId", "UNKNOWN")
         session_id = response.get("order", {}).get("deviceSessionId", "UNKNOWN")
-        auth_result = payload.get("transactions", [{}])[0].get("authorizationStatus", {}).get("authResult")
-        is_pre_auth = auth_result is None or auth_result == ""
+        # Check if authorizationStatus exists and has authResult
+        transaction = incoming_data.get("transactions", [{}])[0]
+        if (
+            "authorizationStatus" in transaction 
+            and "authResult" in transaction["authorizationStatus"]
+        ):
+            is_pre_auth = False
+        else:
+            is_pre_auth = True  # Default to True if authorizationStatus or authResult missing
         if (
             is_pre_auth 
             and kount_order_id != "UNKNOWN" 
