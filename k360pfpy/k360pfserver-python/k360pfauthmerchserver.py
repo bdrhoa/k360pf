@@ -179,8 +179,9 @@ REFRESH_TIME_BUFFER = 2 * 60  # Refresh 2 minutes before expiry
 AUTH_SERVER_URL = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token"
 KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true"
 # Define possible values for cvvStatus and avsStatus
-CVV_STATUSES = ["MATCH", "NO_MATCH", "NOT_PROVIDED", "UNKNOWN"]
-AVS_STATUSES = ["A", "PARTIAL_MATCH", "NO_MATCH", "UNKNOWN"]
+CVV_STATUSES = ["MATCH", "NO_MATCH", "NOT_PROVIDED"]
+AVS_STATUSES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", \
+    "N", "O", "P", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 # Credentials (use environment variables or secure vault in production)
 #API_KEY = os.getenv("API_KEY")
@@ -287,7 +288,7 @@ async def start_token_refresh_timer():
         await fetch_or_refresh_token()
 
 
-def build_payload(incoming_data: dict) -> dict:
+def build_payload(incoming_data: dict, patch = False) -> dict:
     """
     Map incoming website data to the Kount API's required payload format.
 
@@ -301,7 +302,7 @@ def build_payload(incoming_data: dict) -> dict:
         HTTPException: If the required field `merchantOrderId` is missing.
     """
     merchant_order_id = incoming_data.get("order_id")
-    if not merchant_order_id:
+    if not merchant_order_id and not patch:
         raise HTTPException(status_code=400, detail="Missing required field: merchantOrderId")
 
     payload = {
@@ -405,9 +406,9 @@ def build_payload(incoming_data: dict) -> dict:
                     "authResult": transaction.get("authorizationStatus", {}).get("authResult"),
                     "dateTime": transaction.get("authorizationStatus", {}).get("dateTime"),
                     "verificationResponse": {
-                        "cvvStatus": transaction.get("verificationResponse", {}).get("verificationResponse", {}).get("cvvStatus"),
-                        "avsStatus": transaction.get("verificationResponse", {}).get("verificationResponse", {}).get("avsStatus"),
-                    } if isinstance(transaction.get("verificationResponse", {}).get("verificationResponse"), dict) else None,
+                        "cvvStatus": transaction.get("authorizationStatus", {}).get("verificationResponse", {}).get("cvvStatus"),
+                        "avsStatus": transaction.get("authorizationStatus", {}).get("verificationResponse", {}).get("avsStatus"),
+                    } if isinstance(transaction.get("authorizationStatus", {}).get("verificationResponse"), dict) else None,
                 } if isinstance(transaction.get("authorizationStatus"), dict) else None,
                 "merchantTransactionId": transaction.get("merchant_transaction_id"),
                 "items": [
@@ -425,9 +426,6 @@ def build_payload(incoming_data: dict) -> dict:
 
     # Remove keys where values are None
     payload = {k: v for k, v in payload.items() if v is not None}
-    # print("------------")
-    # print(json.dumps(payload, indent=4))
-    # print("------------")
 
     return payload
 
@@ -506,6 +504,7 @@ async def process_transaction(request: Request):
         response = await kount_api_request(payload)
         decision = response.get("order", {}).get("riskInquiry", {}).get("decision", "UNKNOWN")
         kount_order_id = response.get("order", {}).get("orderId", "UNKNOWN")
+        merchant_order_id = incoming_data.get("order_id", "UNKNOWN")
         session_id = response.get("order", {}).get("deviceSessionId", "UNKNOWN")
         # Check if authorizationStatus exists and has authResult
         transaction = incoming_data.get("transactions", [{}])[0]
@@ -517,13 +516,14 @@ async def process_transaction(request: Request):
         else:
             is_pre_auth = True  # Default to True if authorizationStatus or authResult missing
         if (
-            is_pre_auth 
-            and kount_order_id != "UNKNOWN" 
+            is_pre_auth
+            and kount_order_id != "UNKNOWN"
+            and merchant_order_id != "UNKNOWN"
             and session_id != "UNKNOWN"
             and decision in {"APPROVE","REVIEW"}
         ):
             # Schedule the coroutine to run concurrently, without waiting
-            asyncio.create_task(patch_credit_card_authorization(kount_order_id))     
+            asyncio.create_task(patch_credit_card_authorization(kount_order_id, merchant_order_id))    
         return JSONResponse(content=response)
     except HTTPException as e:
         logging.error("HTTPException: %s", e.detail)
@@ -532,7 +532,7 @@ async def process_transaction(request: Request):
         logging.error("Unexpected error: %s", e)
         raise HTTPException(status_code=500, detail=f"Unexpected error: {e}") from e
 
-def simulate_credit_card_authorization(order_id: str) -> dict:
+def simulate_credit_card_authorization(merchant_order_id: str) -> dict:
     """
     Simulates a credit card authorization decision and returns an authorization payload.
 
@@ -547,19 +547,22 @@ def simulate_credit_card_authorization(order_id: str) -> dict:
     avs_status = random.choice(AVS_STATUSES)
 
     authorization_payload = {
-        "orderId": order_id,
-        "authorizationStatus": {
-            "authResult": auth_result
-        },
-        "verificationResponse": {
-            "cvvStatus": cvv_status,
-            "avsStatus": avs_status
-        }
+        "order_id": merchant_order_id,
+        "transactions": [
+            {
+                "authorizationStatus": {
+                    "authResult": auth_result,
+                    "verificationResponse": {
+                        "cvvStatus": cvv_status,
+                        "avsStatus": avs_status
+                    }
+                }
+            }
+        ]
     }
-
     return authorization_payload
 
-async def patch_credit_card_authorization(order_id: str):
+async def patch_credit_card_authorization(kount_order_id: str, merchant_order_id: str):
     """
     Posts the simulated credit card authorization payload to the Kount API.
 
@@ -569,20 +572,20 @@ async def patch_credit_card_authorization(order_id: str):
     Returns:
         dict: The response from the Kount API.
     """
-    url = f"https://api-sandbox.kount.com/commerce/v2/orders/{order_id}"
-    authorization_payload = simulate_credit_card_authorization(order_id)
-
+    url = f"https://api-sandbox.kount.com/commerce/v2/orders/{kount_order_id}"
+    # Get the simulated authorization results
+    simulated_auth_data = simulate_credit_card_authorization(merchant_order_id)
+    # Build the payload using the simulated authorization data
+    authorization_payload = build_payload(simulated_auth_data,True)
     headers = {
         "Authorization": f"Bearer {token_manager.get_access_token()}",
         "Content-Type": "application/json",
     }
-    print("Authorization payload:", json.dumps(authorization_payload, indent=4))
     async with aiohttp.ClientSession() as session:
         try:
             async with session.patch(url, json=authorization_payload, headers=headers) as response:
                 response.raise_for_status()
                 the_repsonse = await response.json()
-                print("Authorization response:", the_repsonse)
                 return the_repsonse
         except Exception as e:
             logging.error("Failed to patch authorization: %s", e)
