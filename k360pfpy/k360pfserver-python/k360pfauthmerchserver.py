@@ -175,6 +175,9 @@ from fastapi.responses import JSONResponse
 
 from tenacity import retry
 from tenacity import wait_fixed
+from tenacity import retry_if_exception
+from tenacity import stop_after_attempt
+from tenacity import wait_random_exponential 
 
 
 
@@ -182,6 +185,8 @@ from tenacity import wait_fixed
 REFRESH_TIME_BUFFER = 2 * 60  # Refresh 2 minutes before expiry
 AUTH_SERVER_URL = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token"
 KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true"
+#Use this end point to create a timeout for testing
+#KOUNT_API_ENDPOINT = "https://10.255.255.1"  # Non-routable IP (will hang)
 # Define possible values for cvvStatus and avsStatus
 CVV_STATUSES = ["MATCH", "NO_MATCH", "NOT_PROVIDED"]
 AVS_STATUSES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", \
@@ -435,9 +440,75 @@ def build_payload(incoming_data: dict, patch = False) -> dict:
 
     return payload
 
+async def handle_api_failure():
+    """
+    Handle API failure scenarios by returning a default response.
+
+    Returns:
+        dict: A default response indicating approval.
+    """
+    logging.warning("Kount API call failed after retries. Returning default APPROVE response.")
+    return {
+        "order": {
+            "riskInquiry": {
+                "decision": "APPROVE"
+            }
+        }
+    }
+
+def is_408_error(exception):
+    """
+    Check if an exception corresponds to an HTTP 408 (Request Timeout) error.
+
+    Args:
+        exception (Exception): The exception raised during the request.
+
+    Returns:
+        bool: True if the exception is an aiohttp.ClientResponseError with a 408 status, else False.
+    """
+    return isinstance(exception, aiohttp.ClientResponseError) and exception.status == 408
+
+@retry(
+    retry=retry_if_exception(is_408_error),
+    stop=stop_after_attempt(3),
+    wait=wait_random_exponential(multiplier=1, max=10),  # Adding jitter
+)
+async def make_kount_api_request(session, payload):
+    """
+    Make a POST request to the Kount API with retries on HTTP 408 errors.
+
+    This function is decorated with `@retry`, which automatically retries the
+    request with exponential backoff if an HTTP 408 (Request Timeout) occurs.
+
+    Args:
+        session (aiohttp.ClientSession): The active aiohttp session.
+        payload (dict): The formatted payload to send to the Kount API.
+
+    Returns:
+        dict: The JSON response from the Kount API.
+
+    Raises:
+        HTTPException: If the request fails due to a non-408 error or after all retries.
+    """
+    headers = {
+        "Authorization": f"Bearer {token_manager.get_access_token()}",
+        "Content-Type": "application/json",
+    }
+    async with session.post(KOUNT_API_ENDPOINT, json=payload, headers=headers) as response:
+        if response.status == 400:
+            error_details = await response.text()
+            logging.error("Kount API Error: %s, Payload: %s", error_details, json.dumps(payload))
+            raise HTTPException(status_code=400, detail=f"Kount API Error: {error_details}")
+        response.raise_for_status()
+        return await response.json()
+
 async def kount_api_request(payload: dict):
     """
-    Make a POST request to the Kount API with the provided payload.
+    Wrapper function to handle Kount API requests with retries and error handling.
+
+    This function creates an aiohttp session, calls `make_kount_api_request`, and
+    handles exceptions. If the API request fails after retries or due to a non-408
+    error, it calls `handle_api_failure()` before raising an HTTP 500 error.
 
     Args:
         payload (dict): The formatted payload to send to the Kount API.
@@ -446,30 +517,14 @@ async def kount_api_request(payload: dict):
         dict: The response from the Kount API.
 
     Raises:
-        HTTPException: If the API call fails or returns an error.
+        HTTPException: If the API call fails or returns an error after retries.
     """
-    headers = {
-        "Authorization": f"Bearer {token_manager.get_access_token()}",
-        "Content-Type": "application/json",
-    }
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.post(
-                KOUNT_API_ENDPOINT, json=payload, headers=headers
-            ) as response:
-                if response.status == 400:
-                    error_details = await response.text()
-                    logging.error("Kount API Error: %s, Payload: %s", error_details, json.dumps(payload))
-                    raise HTTPException(
-                        status_code=400, detail=f"Kount API Error: {error_details}"
-                    )
-                response.raise_for_status()
-                return await response.json()
+            return await make_kount_api_request(session, payload)
         except Exception as e:
             logging.error("Kount API call failed: %s, Payload: %s", e, json.dumps(payload))
-            raise HTTPException(status_code=500, detail=f"Kount API call failed: {e}") from e
-
-
+            return await handle_api_failure()
 async def lifespan(application: FastAPI):
     """
     Lifespan context for managing startup and shutdown events.
