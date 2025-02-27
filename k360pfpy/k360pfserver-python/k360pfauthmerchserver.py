@@ -310,11 +310,11 @@ def build_payload(incoming_data: dict, patch = False) -> dict:
         dict: A payload formatted for the Kount API.
 
     Raises:
-        HTTPException: If the required field `merchantOrderId` is missing.
+        ValueError: If the required field `merchantOrderId` is missing.
     """
     merchant_order_id = incoming_data.get("order_id")
     if not merchant_order_id and not patch:
-        raise HTTPException(status_code=400, detail="Missing required field: merchantOrderId")
+        raise ValueError("Missing required field: merchantOrderId")
 
     payload = {
         "merchantOrderId": merchant_order_id,
@@ -447,7 +447,6 @@ async def handle_api_failure():
     Returns:
         dict: A default response indicating approval.
     """
-    logging.warning("Kount API call failed after retries. Returning default APPROVE response.")
     return {
         "order": {
             "riskInquiry": {
@@ -494,14 +493,25 @@ async def make_kount_api_request(session, payload):
         "Authorization": f"Bearer {token_manager.get_access_token()}",
         "Content-Type": "application/json",
     }
-    async with session.post(KOUNT_API_ENDPOINT, json=payload, headers=headers) as response:
-        if response.status == 400:
-            error_details = await response.text()
-            logging.error("Kount API Error: %s, Payload: %s", error_details, json.dumps(payload))
-            raise HTTPException(status_code=400, detail=f"Kount API Error: {error_details}")
-        response.raise_for_status()
-        return await response.json()
+    try:
+        async with session.post(KOUNT_API_ENDPOINT, json=payload, headers=headers) as response:
+            if response.status == 400:
+                error_details = await response.text()
+                logging.error("Kount API Error 400: %s, Payload: %s", error_details, json.dumps(payload))
+                return {
+                    "error": "Bad Request",
+                    "details": error_details,
+                    "fallback": True
+                }  # Return a fallback error response
 
+            response.raise_for_status()
+            return await response.json()
+    except aiohttp.ClientResponseError as e:
+        logging.error("Kount API response error: %s", e)
+        raise
+    except Exception as e:
+        logging.error("Unexpected Kount API failure: %s", e)
+        raise
 async def kount_api_request(payload: dict):
     """
     Wrapper function to handle Kount API requests with retries and error handling.
@@ -550,48 +560,38 @@ async def process_transaction(request: Request):
     """
     Process transaction requests from the client and call the Kount API.
 
-    Args:
-        request (Request): The HTTP request containing transaction data.
-
-    Returns:
-        JSONResponse: The response from the Kount API.
-
-    Raises:
-        HTTPException: If an error occurs during processing or API call.
+    If any error occurs, return the default fallback response from handle_api_failure().
     """
     try:
         incoming_data = await request.json()
-        payload = build_payload(incoming_data)
+        payload = build_payload(incoming_data)  # Raises ValueError if order_id is missing
         response = await kount_api_request(payload)
         decision = response.get("order", {}).get("riskInquiry", {}).get("decision", "UNKNOWN")
         kount_order_id = response.get("order", {}).get("orderId", "UNKNOWN")
         merchant_order_id = incoming_data.get("order_id", "UNKNOWN")
         session_id = response.get("order", {}).get("deviceSessionId", "UNKNOWN")
+
         # Check if authorizationStatus exists and has authResult
         transaction = incoming_data.get("transactions", [{}])[0]
-        if (
-            "authorizationStatus" in transaction 
-            and "authResult" in transaction["authorizationStatus"]
-        ):
-            is_pre_auth = False
-        else:
-            is_pre_auth = True  # Default to True if authorizationStatus or authResult missing
+        is_pre_auth = not (
+            "authorizationStatus" in transaction and "authResult" in transaction["authorizationStatus"]
+        )
+
         if (
             is_pre_auth
             and kount_order_id != "UNKNOWN"
             and merchant_order_id != "UNKNOWN"
             and session_id != "UNKNOWN"
-            and decision in {"APPROVE","REVIEW"}
+            and decision in {"APPROVE", "REVIEW"}
         ):
             # Schedule the coroutine to run concurrently, without waiting
-            asyncio.create_task(patch_credit_card_authorization(kount_order_id, merchant_order_id))    
+            asyncio.create_task(patch_credit_card_authorization(kount_order_id, merchant_order_id))
+
         return JSONResponse(content=response)
-    except HTTPException as e:
-        logging.error("HTTPException: %s", e.detail)
-        raise e 
+
     except Exception as e:
-        logging.error("Unexpected error: %s", e)
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}") from e
+        logging.error("Error occurred: %s", e)
+        return JSONResponse(content=await handle_api_failure())
 
 def simulate_credit_card_authorization(merchant_order_id: str) -> dict:
     """
