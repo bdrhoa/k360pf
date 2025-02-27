@@ -160,7 +160,7 @@ curl --request POST \
 }'
 '''
 
-import io
+import os
 import logging
 import json
 import random
