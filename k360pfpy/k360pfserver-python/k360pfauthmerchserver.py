@@ -173,6 +173,10 @@ import aiohttp
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from tenacity import retry
+from tenacity import wait_fixed
+
+
 
 # Constants
 REFRESH_TIME_BUFFER = 2 * 60  # Refresh 2 minutes before expiry
@@ -239,6 +243,8 @@ class TokenManager:
 
 token_manager = TokenManager()
 
+# Retry JWT refresh every 10 seconds
+@retry(wait=wait_fixed(10))
 async def fetch_or_refresh_token():
     """
     Fetch or refresh the JWT token from the authentication server.
