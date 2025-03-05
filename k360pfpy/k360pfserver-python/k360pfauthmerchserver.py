@@ -177,9 +177,8 @@ from tenacity import retry
 from tenacity import wait_fixed
 from tenacity import retry_if_exception
 from tenacity import stop_after_attempt
-from tenacity import wait_random_exponential 
-
-
+from tenacity import wait_random_exponential
+from tenacity import RetryError
 
 # Constants
 REFRESH_TIME_BUFFER = 2 * 60  # Refresh 2 minutes before expiry
@@ -462,20 +461,21 @@ async def handle_api_failure(is_pre_auth: bool, merchant_order_id: str = "UNKNOW
         }
     }
 
-def is_408_error(exception):
-    """
-    Check if an exception corresponds to an HTTP 408 (Request Timeout) error.
 
-    Args:
+def is_retryable_error(exception):
+    """
+    Retry on 408 (Timeout) or 500 (Internal Server Error).
+    
+        Args:
         exception (Exception): The exception raised during the request.
 
     Returns:
-        bool: True if the exception is an aiohttp.ClientResponseError with a 408 status, else False.
+        bool: True if the exception is an aiohttp.ClientResponseError with a 408 or 500 status, else False.
     """
-    return isinstance(exception, aiohttp.ClientResponseError) and exception.status == 408
+    return isinstance(exception, aiohttp.ClientResponseError) and exception.status in {408, 500}
 
 @retry(
-    retry=retry_if_exception(is_408_error),
+    retry=retry_if_exception(is_retryable_error),
     stop=stop_after_attempt(3),
     wait=wait_random_exponential(multiplier=1, max=10),  # Adding jitter
 )
@@ -595,7 +595,7 @@ async def process_transaction(request: Request):
             and decision in {"APPROVE", "REVIEW"}
         ):
             # Schedule the coroutine to run concurrently, without waiting
-            asyncio.create_task(patch_credit_card_authorization(kount_order_id, merchant_order_id))
+            asyncio.create_task(safe_patch_credit_card_authorization(kount_order_id, merchant_order_id))
 
         return JSONResponse(content=response)
 
@@ -633,32 +633,67 @@ def simulate_credit_card_authorization(merchant_order_id: str) -> dict:
     }
     return authorization_payload
 
+
+
+@retry(
+    retry=retry_if_exception(is_retryable_error),  # Retry on 408 and 500 errors
+    stop=stop_after_attempt(3),  # Stop after 3 attempts
+    wait=wait_random_exponential(multiplier=1, max=10),  # Exponential backoff with jitter
+)
 async def patch_credit_card_authorization(kount_order_id: str, merchant_order_id: str):
     """
     Posts the simulated credit card authorization payload to the Kount API.
 
     Args:
-        order_id (str): The order ID to associate with the authorization.
+        kount_order_id (str): The order ID to associate with the authorization.
+        merchant_order_id (str): The merchant order ID.
 
     Returns:
         dict: The response from the Kount API.
     """
     url = f"https://api-sandbox.kount.com/commerce/v2/orders/{kount_order_id}"
-    # Get the simulated authorization results
     simulated_auth_data = simulate_credit_card_authorization(merchant_order_id)
-    # Build the payload using the simulated authorization data
-    authorization_payload = build_payload(simulated_auth_data,True)
+    authorization_payload = build_payload(simulated_auth_data, True)
     authorization_payload["transactions"][0]["authorizationStatus"]["authResult"] = "APPROVED"
+    
     headers = {
         "Authorization": f"Bearer {token_manager.get_access_token()}",
         "Content-Type": "application/json",
     }
+
     async with aiohttp.ClientSession() as session:
         try:
             async with session.patch(url, json=authorization_payload, headers=headers) as response:
-                response.raise_for_status()
-                the_repsonse = await response.json()
-                return the_repsonse
-        except Exception as e:
+                response.raise_for_status()  # Raises aiohttp.ClientResponseError if status is 4xx or 5xx
+                return await response.json()
+        except aiohttp.ClientResponseError as e:
             logging.error("Failed to patch authorization: %s", e)
-            raise HTTPException(status_code=500, detail=f"Failed to patch authorization: {e}") from e
+            raise  # Let Tenacity handle retries
+
+async def safe_patch_credit_card_authorization(kount_order_id: str, merchant_order_id: str):
+    """
+    Executes the PATCH request to update credit card authorization in the Kount API with retry logic.
+
+    This function wraps `patch_credit_card_authorization()` to handle cases where all retry attempts 
+    fail. If retries are exhausted, it extracts the last exception and raises a meaningful HTTP error.
+
+    Args:
+        kount_order_id (str): The unique order ID in the Kount system.
+        merchant_order_id (str): The merchant's order ID associated with the transaction.
+
+    Returns:
+        dict: The successful API response if the request eventually succeeds.
+
+    Raises:
+        HTTPException: If all retries fail, raises an error with the final failure details.
+    """
+    try:
+        return await patch_credit_card_authorization(kount_order_id, merchant_order_id)
+    except RetryError as re:
+        last_exception = re.last_attempt.exception()  # Get the last raised exception
+        if isinstance(last_exception, aiohttp.ClientResponseError):
+            logging.error("Final failure after retries. Status: %s, URL: %s", last_exception.status, last_exception.request_info.url)
+            raise HTTPException(status_code=last_exception.status, detail=f"Final failure after retries: {last_exception.message}")
+        else:
+            logging.error("Unexpected failure after retries: %s", re)
+            raise HTTPException(status_code=500, detail="Unexpected error after retries")
