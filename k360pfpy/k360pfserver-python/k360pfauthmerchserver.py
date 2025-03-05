@@ -193,8 +193,7 @@ AVS_STATUSES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
     "N", "O", "P", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 # Credentials (use environment variables or secure vault in production)
-#API_KEY = os.getenv("API_KEY")
-API_KEY = "MG9hMWJjNXgxcmJrd3ZlM3kzNTg6c3ZHNzZiY19SdGl6c0M1bDJiWGtBeXNyRjRuTkRONGY4YVpqaG9zUkNsTkxoRk94akJ5b3lEQVdvTklkMEU1RA=="
+API_KEY = os.getenv("API_KEY")
 
 if not API_KEY:
     raise ValueError("API_KEY environment variable not set.")
@@ -440,13 +439,21 @@ def build_payload(incoming_data: dict, patch = False) -> dict:
 
     return payload
 
-async def handle_api_failure():
+async def handle_api_failure(is_pre_auth: bool, merchant_order_id: str = "UNKNOWN"):
     """
     Handle API failure scenarios by returning a default response.
+    
+    Args:
+        is_pre_auth (bool): Whether the transaction is pre-authorization. Defaults to True.
+        merchant_order_id (str): The order ID associated with the transaction. Defaults to "UNKNOWN".
 
     Returns:
         dict: A default response indicating approval.
     """
+    print(is_pre_auth)
+    if is_pre_auth:
+        simulate_credit_card_authorization(merchant_order_id)
+
     return {
         "order": {
             "riskInquiry": {
@@ -512,29 +519,27 @@ async def make_kount_api_request(session, payload):
     except Exception as e:
         logging.error("Unexpected Kount API failure: %s", e)
         raise
-async def kount_api_request(payload: dict):
+async def kount_api_request(payload: dict, is_pre_auth: bool, merchant_order_id: str):
     """
     Wrapper function to handle Kount API requests with retries and error handling.
 
-    This function creates an aiohttp session, calls `make_kount_api_request`, and
-    handles exceptions. If the API request fails after retries or due to a non-408
-    error, it calls `handle_api_failure()` before raising an HTTP 500 error.
+    If the API request fails after retries, it calls `handle_api_failure()`.
 
     Args:
         payload (dict): The formatted payload to send to the Kount API.
+        is_pre_auth (bool): Whether the transaction is pre-authorization.
+        merchant_order_id (str): The merchant order ID.
 
     Returns:
         dict: The response from the Kount API.
-
-    Raises:
-        HTTPException: If the API call fails or returns an error after retries.
     """
     async with aiohttp.ClientSession() as session:
         try:
             return await make_kount_api_request(session, payload)
         except Exception as e:
             logging.error("Kount API call failed: %s, Payload: %s", e, json.dumps(payload))
-            return await handle_api_failure()
+            return await handle_api_failure(is_pre_auth, merchant_order_id)
+        
 async def lifespan(application: FastAPI):
     """
     Lifespan context for managing startup and shutdown events.
@@ -562,26 +567,31 @@ async def process_transaction(request: Request):
 
     If any error occurs, return the default fallback response from handle_api_failure().
     """
+    is_pre_auth = True  # Always initialized at the beginning
+    merchant_order_id = "UNKNOWN"
+
     try:
         incoming_data = await request.json()
-        payload = build_payload(incoming_data)  # Raises ValueError if order_id is missing
-        response = await kount_api_request(payload)
+        payload = build_payload(incoming_data)  # May raise ValueError
+        merchant_order_id = incoming_data.get("order_id", "UNKNOWN")
+
+        # Ensure transactions exist and extract safely
+        transactions = incoming_data.get("transactions", [])
+        if isinstance(transactions, list) and transactions:
+            first_transaction = transactions[0]
+            is_pre_auth = not (
+                "authorizationStatus" in first_transaction and "authResult" in first_transaction["authorizationStatus"]
+            )
+
+        # Pass is_pre_auth explicitly to kount_api_request
+        response = await kount_api_request(payload, is_pre_auth, merchant_order_id)
         decision = response.get("order", {}).get("riskInquiry", {}).get("decision", "UNKNOWN")
         kount_order_id = response.get("order", {}).get("orderId", "UNKNOWN")
-        merchant_order_id = incoming_data.get("order_id", "UNKNOWN")
-        session_id = response.get("order", {}).get("deviceSessionId", "UNKNOWN")
-
-        # Check if authorizationStatus exists and has authResult
-        transaction = incoming_data.get("transactions", [{}])[0]
-        is_pre_auth = not (
-            "authorizationStatus" in transaction and "authResult" in transaction["authorizationStatus"]
-        )
 
         if (
             is_pre_auth
             and kount_order_id != "UNKNOWN"
             and merchant_order_id != "UNKNOWN"
-            and session_id != "UNKNOWN"
             and decision in {"APPROVE", "REVIEW"}
         ):
             # Schedule the coroutine to run concurrently, without waiting
@@ -591,8 +601,8 @@ async def process_transaction(request: Request):
 
     except Exception as e:
         logging.error("Error occurred: %s", e)
-        return JSONResponse(content=await handle_api_failure())
-
+        return JSONResponse(content=await handle_api_failure(is_pre_auth, merchant_order_id))
+        
 def simulate_credit_card_authorization(merchant_order_id: str) -> dict:
     """
     Simulates a credit card authorization decision and returns an authorization payload.
@@ -638,6 +648,7 @@ async def patch_credit_card_authorization(kount_order_id: str, merchant_order_id
     simulated_auth_data = simulate_credit_card_authorization(merchant_order_id)
     # Build the payload using the simulated authorization data
     authorization_payload = build_payload(simulated_auth_data,True)
+    authorization_payload["transactions"][0]["authorizationStatus"]["authResult"] = "APPROVED"
     headers = {
         "Authorization": f"Bearer {token_manager.get_access_token()}",
         "Content-Type": "application/json",
