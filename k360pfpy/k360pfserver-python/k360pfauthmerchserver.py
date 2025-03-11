@@ -464,15 +464,19 @@ async def handle_api_failure(is_pre_auth: bool, merchant_order_id: str = "UNKNOW
 
 def is_retryable_error(exception):
     """
-    Retry on 408 (Timeout) or 500 (Internal Server Error).
+    Retry on 403 (Forbidden), 408 (Timeout), 429 (Too Many Requests), or 
+            500 (Internal Server Error), 502 (Bad Gateway), 503 (Service Unavailabe)
+            or 504 (Gateway Timeout) status codes.
     
         Args:
         exception (Exception): The exception raised during the request.
 
     Returns:
-        bool: True if the exception is an aiohttp.ClientResponseError with a 408 or 500 status, else False.
+        bool: True if the exception is an aiohttp.ClientResponseError with a status
+            in 403,408,429,500, 502, 503, else False.
     """
-    return isinstance(exception, aiohttp.ClientResponseError) and exception.status in {408, 500}
+    return isinstance(exception, aiohttp.ClientResponseError) and \
+        exception.status in {403,408,429,500, 502, 503, 504}
 
 @retry(
     retry=retry_if_exception(is_retryable_error),
