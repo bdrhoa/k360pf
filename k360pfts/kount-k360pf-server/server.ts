@@ -28,6 +28,7 @@ import { setTimeout } from 'timers/promises';
 import fs from 'fs';
 import path from 'path';
 
+
 const app = express();
 app.use(express.json());
 
@@ -87,6 +88,7 @@ const REFRESH_BUFFER = 120; // 2 minutes before expiration
 if (!API_KEY) {
     throw new Error("API_KEY environment variable not set.");
 }
+console.log("API_KEY:", API_KEY);
 
 // Apply axiosRetry globally
 axiosRetry(axios, {
@@ -120,24 +122,28 @@ class TokenManager {
     }
 
     private async refreshToken(): Promise<void> {
-        try {
-            const response = await axios.post(AUTH_SERVER_URL, {
-                grant_type: "client_credentials",
-                scope: "k1_integration_api",
-            }, {
-                headers: {
-                    Authorization: `Basic ${API_KEY}`,
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                timeout: 10000,
-            });
-            this.accessToken = response.data.access_token;
-            const decoded: any = this.accessToken ? jwt.decode(this.accessToken) : null;
-            this.expiresAt = decoded?.exp ?? Date.now() / 1000 + 3600;
-        } catch (error) {
-            logError(`Failed to fetch token: ${error}`);
-        }
-    }
+      try {
+          const response = await axios({
+              url: `https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token`,
+              method: "post",
+              headers: {
+                  authorization: `Basic ${API_KEY}`,
+              },
+              params: {
+                  grant_type: "client_credentials",
+                  scope: "k1_integration_api",
+              },
+          });
+  
+          this.accessToken = response.data.access_token;
+          const decoded: any = this.accessToken ? jwt.decode(this.accessToken) : null;
+          this.expiresAt = decoded?.exp ?? Date.now() / 1000 + 3600;
+  
+          console.log("Token obtained:", this.accessToken);
+      } catch (error: any) {
+          logError(`Failed to fetch token: ${error}`);
+      }
+   }
 
     private async refreshTokenLoop(): Promise<void> {
         while (true) {
