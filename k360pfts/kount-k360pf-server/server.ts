@@ -27,6 +27,7 @@ import jwt from 'jsonwebtoken';
 import { setTimeout } from 'timers/promises';
 import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
 
 const app = express();
@@ -45,7 +46,7 @@ const AVS_STATUSES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"
 
 // Function to simulate credit card authorization
 type AuthorizationPayload = {
-    order_id: string;
+    merchantOrderId: string;
     transactions: Array<{
         authorizationStatus: {
             authResult: string;
@@ -63,7 +64,7 @@ function simulateCreditCardAuthorization(merchantOrderId: string): Authorization
     const avsStatus = AVS_STATUSES[Math.floor(Math.random() * AVS_STATUSES.length)];
 
     return {
-        order_id: merchantOrderId,
+      merchantOrderId: merchantOrderId,
         transactions: [
             {
                 authorizationStatus: {
@@ -162,9 +163,10 @@ const tokenManager = TokenManager.getInstance();
 
 app.post('/process-transaction', async (req, res) => {
     try {
-        const payload = req.body;
-        const response = await processTransaction(payload);
-        res.json(response);
+      const payload = JSON.parse(JSON.stringify(req.body));
+      console.log("Processing transaction:", JSON.stringify(payload, null, 2));
+      const response = await processTransaction(payload);
+      res.json(response);
     } catch (error) {
         logError(`Failed to process transaction: ${error}`);
         res.status(500).json({ error: "Failed to process transaction" });
