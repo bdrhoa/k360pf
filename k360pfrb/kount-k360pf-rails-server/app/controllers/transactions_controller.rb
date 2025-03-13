@@ -9,33 +9,24 @@ require 'retriable'
 # TransactionsController handles transaction processing, interacts with the Kount API,
 # and updates authorization statuses when necessary.
 class TransactionsController < ApplicationController
-  before_action :fetch_or_refresh_token, only: [:process_transaction]
+  skip_before_action :verify_authenticity_token, only: [:process_transaction]
+  before_action -> { TokenManager.fetch_or_refresh_token }, only: [:process_transaction]
 
   # Constants
-  AUTH_SERVER_URL = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token"
+  #AUTH_SERVER_URL = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token"
   KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true"
-  REFRESH_TIME_BUFFER = 2 * 60 # Refresh 2 minutes before expiry
+  #REFRESH_TIME_BUFFER = 2 * 60 # Refresh 2 minutes before expiry
   API_KEY = ENV['API_KEY']
-
-  ##
-  # Singleton class for managing access tokens.
-  class TokenManager
-    @access_token = nil
-
-    def self.access_token
-      @access_token
-    end
-
-    def self.set_access_token(token)
-      @access_token = token
-    end
-  end
 
   ##
   # Processes the transaction and interacts with the Kount API.
   def process_transaction
+    Rails.logger.info "🚀 process_transaction STARTED!"
+
     request_data = JSON.parse(request.body.read)
     merchant_order_id = request_data["order_id"] || "UNKNOWN"
+
+    Rails.logger.info "🔍 Incoming transaction for Order ID: #{merchant_order_id}"
 
     # Determine if this is a pre-authorization request
     is_pre_auth = true
@@ -69,41 +60,11 @@ class TransactionsController < ApplicationController
   private
 
   ##
-  # Fetches or refreshes the authentication token.
-  def fetch_or_refresh_token
-    return if TokenManager.access_token && valid_token?(TokenManager.access_token)
-
-    response = HTTParty.post(AUTH_SERVER_URL,
-      headers: {
-        "Authorization" => "Basic #{API_KEY}",
-        "Content-Type" => "application/x-www-form-urlencoded"
-      },
-      body: { grant_type: "client_credentials", scope: "k1_integration_api" }
-    )
-
-    if response.success?
-      TokenManager.set_access_token(response.parsed_response["access_token"])
-    else
-      Rails.logger.error("Failed to fetch token: #{response.body}")
-      render json: { error: "Failed to fetch token" }, status: 500
-    end
-  end
-
-  ##
-  # Checks if an access token is still valid.
-  def valid_token?(token)
-    decoded = JWT.decode(token, nil, false)[0]
-    expiration_time = decoded["exp"] - REFRESH_TIME_BUFFER
-    expiration_time > Time.now.to_i
-  rescue JWT::DecodeError
-    false
-  end
-
-  ##
   # Calls the Kount API with retry logic.
   def kount_api_request(payload, is_pre_auth, merchant_order_id)
+    Rails.logger.info "Using access token: #{TokenManager.access_token}..."
+  
     response = nil
-
     Retriable.retriable(on: [HTTParty::Error, Net::ReadTimeout, Net::OpenTimeout], tries: 3, base_interval: 1, max_interval: 10) do
       response = HTTParty.post(KOUNT_API_ENDPOINT,
         headers: {
@@ -112,21 +73,16 @@ class TransactionsController < ApplicationController
         },
         body: payload.to_json
       )
-
-      if response.code == 400
-        Rails.logger.error("Kount API Error 400: #{response.body}, Payload: #{payload.to_json}")
-        return { "error" => "Bad Request", "details" => response.body, "fallback" => true }
-      end
-
+  
       raise "Kount API error: #{response.body}" unless response.success?
     end
-
+  
     response.parsed_response
   rescue => e
     Rails.logger.error("Kount API call failed: #{e.message}")
     handle_api_failure(is_pre_auth, merchant_order_id)
   end
-
+  
   ##
   # Sends a PATCH request to update credit card authorization.
   def patch_credit_card_authorization(kount_order_id, merchant_order_id)
