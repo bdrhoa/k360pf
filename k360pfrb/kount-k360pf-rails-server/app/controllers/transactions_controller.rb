@@ -202,7 +202,7 @@ class TransactionsController < ApplicationController
         {
           "processor" => transaction["processor"],
           "processorMerchantId" => transaction["processor_merchant_id"],
-          "payment" => transaction["payment"]&.slice("type", "payment_token", "bin", "last4"),
+          "payment" => transaction["payment"]&.slice("type", "paymentToken", "bin", "last4"),
           "subtotal" => transaction["subtotal"].to_s || "0",
           "orderTotal" => transaction["order_total"].to_s || "0",
           "currency" => transaction["currency"],
