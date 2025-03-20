@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "K360PF-Webhook-Test",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
