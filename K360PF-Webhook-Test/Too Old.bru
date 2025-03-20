@@ -1,0 +1,21 @@
+meta {
+  name: Too Old
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://127.0.0.1:8000/kount360WebhookReceiver
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  X-Event-Timestamp: 2022-05-24T23:18:00Z
+  X-Event-Signature: BASE64_ENCODED_SIGNATURE
+}
+
+body:json {
+  {"id":"f276e154-23ef-4366-933b-e1f12e159901","eventType":"Order.StatusChange","apiVersion":"v1","clientId":"900900","kountOrderId":"8V6CFF359HS5QQ6G","merchantOrderId":"qjlm9gvol6olejcs","orderCreationDate":"2022-05-24T23:13:02Z","eventDate":"2022-05-24T23:18:00Z","fieldName":"status","oldValue":"REVIEW","newValue":"DECLINE"}
+}
