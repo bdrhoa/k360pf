@@ -16,3 +16,9 @@ curl --request POST \
   "oldValue": "REVIEW",
   "newValue": "DECLINE"
 }'
+
+curl -X POST https://k360pf.onrender.com/kount360WebhookReceiver \
+     -H "Content-Type: application/json" \
+     -H "X-Event-Timestamp: 2025-03-20T21:08:13Z" \
+     -H "X-Event-Signature: BASE64_ENCODED_SIGNATURE" \
+     -d '{"id":"f276e154-23ef-4366-933b-e1f12e159901","eventType":"Order.StatusChange","apiVersion":"v1","clientId":"900900","kountOrderId":"8V6CFF359HS5QQ6G","merchantOrderId":"qjlm9gvol6olejcs","orderCreationDate":"2022-05-24T23:13:02Z","eventDate":"2022-05-24T23:18:00Z","fieldName":"status","oldValue":"REVIEW","newValue":"DECLINE"}'
