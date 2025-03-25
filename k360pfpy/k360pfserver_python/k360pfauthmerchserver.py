@@ -159,8 +159,15 @@ curl --request POST \
     }
 }'
 '''
+from k360_token_python import token_manager
+from k360_token_python import fetch_or_refresh_token
+from k360_token_python import start_token_refresh_timer
 
 import sys
+#sys.path.append("/Users/brad/Dropbox/Documents/src/kount/k360pf/k360pfpy/k360_token_python")
+print("Python sys.path:", sys.path)
+
+
 import os
 import logging
 import json
@@ -179,10 +186,8 @@ from tenacity import wait_random_exponential
 from tenacity import RetryError
 
 
-from k360_token_python import token_manager
-from k360_token_python.jwt_utils import token_manager
 
-#fetch_or_refresh_token, start_token_refresh_timer
+
 
 # Constants
 KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true"
@@ -461,8 +466,8 @@ async def lifespan(application: FastAPI):
     Lifespan context for managing startup and shutdown events.
     """
     # Startup logic
-    await fetch_or_refresh_token()
-    application.state.refresh_task = asyncio.create_task(start_token_refresh_timer())
+    await fetch_or_refresh_token(token_manager)
+    application.state.refresh_task = asyncio.create_task(start_token_refresh_timer(token_manager))
 
     yield  # Yield control for the app's lifespan
 
