@@ -1,0 +1,10 @@
+[project]
+name = "k360_token_python"
+version = "0.1.0"
+description = "JWT token management utilities for Kount API"
+authors = [{ name = "Brad Rhoads", email = "brad.rhoads@kount.com" }]
+dependencies = []
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
