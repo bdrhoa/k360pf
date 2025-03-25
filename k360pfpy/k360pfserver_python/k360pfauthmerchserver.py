@@ -160,13 +160,12 @@ curl --request POST \
 }'
 '''
 
+import sys
 import os
 import logging
 import json
 import random
-import time
 import asyncio
-import jwt
 import aiohttp
 
 
@@ -174,15 +173,18 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from tenacity import retry
-from tenacity import wait_fixed
 from tenacity import retry_if_exception
 from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
 from tenacity import RetryError
 
+
+from k360_token_python import token_manager
+from k360_token_python.jwt_utils import token_manager
+
+#fetch_or_refresh_token, start_token_refresh_timer
+
 # Constants
-REFRESH_TIME_BUFFER = 2 * 60  # Refresh 2 minutes before expiry
-AUTH_SERVER_URL = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token"
 KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true"
 #Use this end point to create a timeout for testing
 #KOUNT_API_ENDPOINT = "https://10.255.255.1"  # Non-routable IP (will hang)
@@ -206,96 +208,6 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
-class TokenManager:
-    """
-    Singleton class to manage access tokens for authentication.
-
-    Methods:
-        get_access_token: Retrieve the current access token.
-        set_access_token: Set a new access token.
-    """
-
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(TokenManager, cls).__new__(cls, *args, **kwargs)
-        return cls._instance
-
-    def __init__(self):
-        if not hasattr(self, "access_token"):
-            self.access_token = None
-
-    def get_access_token(self):
-        """
-        Retrieve the current access token.
-
-        Returns:
-            str: The current access token.
-        """
-        return self.access_token
-
-    def set_access_token(self, token):
-        """
-        Set a new access token.
-
-        Args:
-            token (str): The new access token to set.
-        """
-        self.access_token = token
-
-token_manager = TokenManager()
-
-# Retry JWT refresh every 10 seconds
-@retry(wait=wait_fixed(10))
-async def fetch_or_refresh_token():
-    """
-    Fetch or refresh the JWT token from the authentication server.
-
-    Raises:
-        HTTPException: If the token fetch or refresh fails.
-
-    Returns:
-        str: The new access token.
-    """
-    async with aiohttp.ClientSession() as session:
-        try:
-            params = {"grant_type": "client_credentials", "scope": "k1_integration_api"}
-            headers = {
-                "Authorization": f"Basic {API_KEY}",
-                "Content-Type": "application/x-www-form-urlencoded",
-            }
-            async with session.post(
-                AUTH_SERVER_URL, params=params, headers=headers, timeout=10
-            ) as response:
-                response.raise_for_status()
-                data = await response.json()
-                token_manager.set_access_token(data["access_token"])
-                print("Token obtained:", token_manager.get_access_token())
-                return data["access_token"]
-        except Exception as e:
-            logging.error("Failed to fetch token: %s", e)
-            raise HTTPException(status_code=500, detail=f"Failed to fetch token: {e}") from e
-
-async def start_token_refresh_timer():
-    """
-    Start a background task to refresh the JWT token before it expires.
-
-    The function runs indefinitely, calculating the remaining time until
-    the token expires and refreshing it proactively.
-    """
-    while True:
-        current_token = token_manager.get_access_token()
-        try:
-            decoded = jwt.decode(current_token, options={"verify_signature": False})
-            exp_time = decoded["exp"] - REFRESH_TIME_BUFFER
-            time_until_refresh = exp_time - int(time.time())
-        except jwt.DecodeError:
-            time_until_refresh = 0
-        if time_until_refresh > 0:
-            await asyncio.sleep(time_until_refresh)
-        await fetch_or_refresh_token()
-
 
 def build_payload(incoming_data: dict, patch = False) -> dict:
     """

@@ -9,7 +9,8 @@ Instructions:
 
 
 3. Send a POST request with headers:
-   - X-Event-Timestamp (ISO8601 format)
+      Get the current UTC time from https://www.timeanddate.com/worldclock/timezone/utc
+   - X-Event-Timestamp (ISO8601 format) // 2022-05-24T23:18:00Z
    - X-Event-Signature (Base64-encoded signature)
 
    And a JSON payload like:

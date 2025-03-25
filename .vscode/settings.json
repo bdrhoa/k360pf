@@ -1,1 +1,3 @@
-{}
+{
+  "python.analysis.extraPaths": ["k360pfpy/k360-token-python"]
+}
