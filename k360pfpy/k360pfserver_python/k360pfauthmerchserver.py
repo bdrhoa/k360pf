@@ -188,10 +188,10 @@ AVS_STATUSES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
     "N", "O", "P", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 # Credentials (use environment variables or secure vault in production)
-API_KEY = os.getenv("API_KEY")
+API_KEY = os.getenv("KOUNT_API_KEY")
 
 if not API_KEY:
-    raise ValueError("API_KEY environment variable not set.")
+    raise ValueError("KOUNT_API_KEY environment variable not set.")
 
 # Configure logging to write to a file named kount.log
 logging.basicConfig(
