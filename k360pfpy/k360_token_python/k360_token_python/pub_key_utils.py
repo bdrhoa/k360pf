@@ -33,6 +33,9 @@ PUBLIC_KEY_URL_TEMPLATE = (
 )
 
 class PublicKeyManager:
+    """
+    Singleton class to store and manage the current public key and its expiration time.
+    """
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -46,14 +49,31 @@ class PublicKeyManager:
             self.valid_until = 0
 
     def get_public_key(self):
+        """
+        Returns the currently stored public key.
+        """
         return self.public_key
 
     def set_public_key(self, key, valid_until):
+        """
+        Sets the current public key and its expiration timestamp.
+
+        Args:
+            key (str): The public key string.
+            valid_until (int): Unix timestamp indicating when the key expires.
+        """
         self.public_key = key
         self.valid_until = valid_until
 
 @retry(wait=wait_fixed(10))
 async def fetch_public_key():
+    """
+    Fetches the current ENS public key from the Kount API and stores it in the PublicKeyManager.
+    Retries on failure with a fixed delay.
+
+    Raises:
+        HTTPException: If the public key cannot be fetched.
+    """
     access_token = token_manager.get_access_token()
     if not access_token:
         access_token = await fetch_or_refresh_token(token_manager)
@@ -78,6 +98,10 @@ async def fetch_public_key():
             raise HTTPException(status_code=500, detail=f"Failed to fetch public key: {e}") from e
 
 async def start_public_key_refresh_timer():
+    """
+    Starts an asynchronous loop that waits until the public key is near expiry and then refreshes it.
+    Runs indefinitely to ensure the public key remains valid.
+    """
     while True:
         current_time = int(time.time())
         time_until_refresh = public_key_manager.valid_until - current_time - 120  # 2 minutes buffer
