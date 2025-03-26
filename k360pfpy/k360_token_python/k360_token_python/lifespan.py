@@ -1,8 +1,9 @@
 """
 Token and public key lifespan management for FastAPI apps.
 
-This module provides an async context manager (`token_lifespan`) that handles
-startup and shutdown logic for managing Kount API access tokens and (optionally) public keys.
+This module provides a factory function (`token_lifespan`) that returns
+an async context manager. It handles startup and shutdown logic for managing
+Kount API access tokens and optionally webhook public key refresh logic.
 
 Usage:
     app = FastAPI(lifespan=token_lifespan())                 # JWT only
@@ -18,10 +19,27 @@ from .pub_key_utils import fetch_public_key, start_public_key_refresh_timer
 
 
 def token_lifespan(use_public_key: bool = False):
+    """
+    Creates a FastAPI lifespan context manager that manages the lifecycle of
+    the Kount JWT token and optionally a webhook public key.
+
+    Args:
+        use_public_key (bool): If True, also fetches and refreshes the public key.
+
+    Returns:
+        Callable: An async context manager function for FastAPI's lifespan hook.
+    """
     @asynccontextmanager
-    async def _lifespan(app: FastAPI):
+    async def lifespan_context(app: FastAPI):
         """
-        Manages the token and optionally public key lifecycle for FastAPI applications.
+        The actual async context manager used by FastAPI to handle startup and shutdown.
+
+        On startup:
+            - Fetches and schedules refresh of JWT access token.
+            - Optionally fetches and schedules refresh of public key.
+
+        On shutdown:
+            - Cancels background refresh tasks gracefully.
 
         Args:
             app (FastAPI): The FastAPI application instance.
@@ -56,4 +74,4 @@ def token_lifespan(use_public_key: bool = False):
                 except asyncio.CancelledError:
                     pass
 
-    return _lifespan
+    return lifespan_context
