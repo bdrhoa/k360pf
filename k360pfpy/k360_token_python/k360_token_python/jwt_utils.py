@@ -29,14 +29,14 @@ AUTH_SERVER_URL = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token"
 The URL of the OAuth2 token endpoint for Kount authentication.
 """
 
-API_KEY = os.getenv("API_KEY")
+API_KEY = os.getenv("KOUNT_API_KEY")
 """
 The base64-encoded API key used for authenticating to the Kount auth server.
 Must be set as an environment variable named 'API_KEY'.
 """
 
 if not API_KEY:
-    raise ValueError("API_KEY environment variable not set.")
+    raise ValueError("KOUNT_API_KEY environment variable not set.")
 
 logger = logging.getLogger(__name__)
 
