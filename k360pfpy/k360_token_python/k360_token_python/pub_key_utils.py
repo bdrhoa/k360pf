@@ -5,7 +5,7 @@ This module fetches and refreshes the webhook validation public key.
 It uses the existing TokenManager to retrieve the JWT and keeps the key in memory.
 
 Environment:
-    Requires the Kount Client ID to be set as an environment variable named 'KOUNT_CLIENT_ID'.
+    Requires the Kount Client ID to be set as an environment variable named 'kount_client_id'.
 """
 
 import asyncio
@@ -18,10 +18,6 @@ from tenacity import retry, wait_fixed
 from .jwt_utils import token_manager, fetch_or_refresh_token
 
 logger = logging.getLogger(__name__)
-
-KOUNT_CLIENT_ID = os.getenv("KOUNT_CLIENT_ID")
-if not KOUNT_CLIENT_ID:
-    raise ValueError("KOUNT_CLIENT_ID environment variable not set.")
 
 # Default to sandbox. Override with env var if needed.
 KOUNT_USE_SANDBOX = os.getenv("KOUNT_USE_SANDBOX", "true").lower() == "true"
@@ -74,11 +70,15 @@ async def fetch_public_key():
     Raises:
         HTTPException: If the public key cannot be fetched.
     """
+    kount_client_id = os.getenv("kount_client_id")
+    if not kount_client_id:
+        raise ValueError("kount_client_id environment variable not set.")
+    
     access_token = token_manager.get_access_token()
     if not access_token:
         access_token = await fetch_or_refresh_token(token_manager)
 
-    url = PUBLIC_KEY_URL_TEMPLATE.format(KOUNT_CLIENT_ID)
+    url = PUBLIC_KEY_URL_TEMPLATE.format(kount_client_id)
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
