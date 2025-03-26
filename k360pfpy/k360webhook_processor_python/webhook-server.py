@@ -50,7 +50,10 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 
-app = FastAPI()
+from k360_token_python import fetch_public_key
+from k360_token_python import token_lifespan
+
+app = FastAPI(lifespan=token_lifespan(use_public_key=True))
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -63,14 +66,9 @@ def simulate_process_order():
     """Simulates processing an order by logging a message."""
     logging.info("process order")
 
-# Public key (Base64-encoded DER format)
-PUBLIC_KEY_B64 = (
-    "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAsQr7/3peYbbHkVsS0NlU4ziIFWKjjSI8HcWRSs6QOP6ZXrLXbvcOIuEFYA5ujThLuQfo05EzvWfVSdelbLJ39QNoFfOJ2YE4hq78/8OSloOU/E68M+rrFrxdS1QohsEuzoKD+9hyD2/3JE3vHpi82CjF1msVn9/fBDhYWvWQIOo16N435Wdfl62UZlAun+4TXYxUi+C2s67f58yPQN1uLEL+fa1L05TASqjINh0qjGIaz74g8lT05h/iDzPuTVGofFgTXUZh1yqA9p2P3I3UrK/jLv+aPkCpkwZltZVx99mk8uNVj4exlRC5kACQhvAbLgxiepmZR5XYyNJq1FPLsZuC27g1Squd7LL3Kdbv2tl4mjFG6P1FJwvve6qFVTq7cujEmq9yhfz16d7BPoT1+msZvoc22E7gTkuaW4cnckn7sbioA99zADcdb7OjzEuPd8NqGGD2Ldjg6eese8LF320XQ6jAc4dXcr6ZxVSSQyyI/qTlfi/3OoK7gSrGJT1MGZiohxx9kjt5z/G9fNoMlrQ/yJyLrTZxnlT+MVOsNtFYLZAV0XwVYQZ0a7PQ8hR4wwJxhfK84CcVUON+v4+vrj9bBDZH+boNIUFVDlpMiPjixunSs8FS9DfJ6UnG2YrlbHThgDmmZHj6sY/SUp4mcblBqGQwtxoTkCQqcJQxvAkCAwEAAQ=="
-)
-
 def get_public_key():
     """Loads and returns the RSA public key from a Base64-encoded DER format."""
-    decoded = base64.b64decode(PUBLIC_KEY_B64)
+    decoded = base64.b64decode(fetch_public_key())
     return load_der_public_key(decoded)
 
 public_key = get_public_key()
