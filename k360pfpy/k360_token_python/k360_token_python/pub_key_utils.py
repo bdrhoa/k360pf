@@ -70,7 +70,7 @@ async def fetch_public_key():
     Raises:
         HTTPException: If the public key cannot be fetched.
     """
-    kount_client_id = os.getenv("kount_client_id")
+    kount_client_id = os.getenv("KOUNT_CLIENT_ID")
     if not kount_client_id:
         raise ValueError("kount_client_id environment variable not set.")
     

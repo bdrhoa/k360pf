@@ -451,7 +451,7 @@ async def kount_api_request(payload: dict, is_pre_auth: bool, merchant_order_id:
             return await handle_api_failure(is_pre_auth, merchant_order_id)
         
 # Create the FastAPI app with lifespan handler
-app = FastAPI(lifespan=token_lifespan)
+app = FastAPI(lifespan=token_lifespan(use_public_key=False))
 
 @app.post("/process-transaction")
 async def process_transaction(request: Request):
