@@ -10,3 +10,4 @@ Exports:
 - start_token_refresh_timer: Coroutine that runs in the background to refresh tokens proactively.
 """
 from .jwt_utils import token_manager, fetch_or_refresh_token, start_token_refresh_timer
+from .lifespan import token_lifespan

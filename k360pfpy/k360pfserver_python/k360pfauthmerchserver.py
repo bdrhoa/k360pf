@@ -159,15 +159,6 @@ curl --request POST \
     }
 }'
 '''
-from k360_token_python import token_manager
-from k360_token_python import fetch_or_refresh_token
-from k360_token_python import start_token_refresh_timer
-
-import sys
-#sys.path.append("/Users/brad/Dropbox/Documents/src/kount/k360pf/k360pfpy/k360_token_python")
-print("Python sys.path:", sys.path)
-
-
 import os
 import logging
 import json
@@ -175,6 +166,8 @@ import random
 import asyncio
 import aiohttp
 
+from k360_token_python import token_manager
+from k360_token_python import token_lifespan
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -184,10 +177,6 @@ from tenacity import retry_if_exception
 from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
 from tenacity import RetryError
-
-
-
-
 
 # Constants
 KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true"
@@ -461,25 +450,8 @@ async def kount_api_request(payload: dict, is_pre_auth: bool, merchant_order_id:
             logging.error("Kount API call failed: %s, Payload: %s", e, json.dumps(payload))
             return await handle_api_failure(is_pre_auth, merchant_order_id)
         
-async def lifespan(application: FastAPI):
-    """
-    Lifespan context for managing startup and shutdown events.
-    """
-    # Startup logic
-    await fetch_or_refresh_token(token_manager)
-    application.state.refresh_task = asyncio.create_task(start_token_refresh_timer(token_manager))
-
-    yield  # Yield control for the app's lifespan
-
-    # Shutdown logic
-    application.state.refresh_task.cancel()
-    try:
-        await application.state.refresh_task
-    except asyncio.CancelledError:
-        pass  # Ignore cancelled error since we are shutting down
-
 # Create the FastAPI app with lifespan handler
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=token_lifespan)
 
 @app.post("/process-transaction")
 async def process_transaction(request: Request):
