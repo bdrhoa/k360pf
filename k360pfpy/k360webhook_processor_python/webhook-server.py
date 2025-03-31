@@ -99,7 +99,7 @@ async def kount360_webhook_receiver(request: Request):
            
     # Verify signature
     signature_b64 = request.headers.get("X-Event-Signature")
-    is_public_key_valid = pub_key_utils.verify_signature(signature_b64, body)
+    is_public_key_valid = await pub_key_utils.verify_signature(signature_b64, body)
     if not is_public_key_valid:
         raise HTTPException(status_code=400, detail="Invalid signature")
     # Process message
