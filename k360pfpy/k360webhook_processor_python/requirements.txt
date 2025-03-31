@@ -2,4 +2,6 @@ fastapi
 uvicorn
 cryptography
 jwt
+aiohttp
+asyncio
 -e ../k360_token_python
