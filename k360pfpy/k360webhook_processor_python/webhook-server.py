@@ -48,9 +48,8 @@ import logging
 from fastapi import FastAPI, Request, HTTPException
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.serialization import load_der_public_key
 
-from k360_token_python import fetch_public_key
+from k360_token_python import pub_key_utils
 from k360_token_python import token_lifespan
 
 app = FastAPI(lifespan=token_lifespan(use_public_key=True))
@@ -66,12 +65,6 @@ def simulate_process_order():
     """Simulates processing an order by logging a message."""
     logging.info("process order")
 
-def get_public_key():
-    """Loads and returns the RSA public key from a Base64-encoded DER format."""
-    decoded = base64.b64decode(fetch_public_key())
-    return load_der_public_key(decoded)
-
-public_key = get_public_key()
 TIMESTAMP_GRACE = datetime.timedelta(minutes=5)
 
 @app.post("/kount360WebhookReceiver")
@@ -84,7 +77,7 @@ async def kount360_webhook_receiver(request: Request):
         raise HTTPException(status_code=400, detail="Missing timestamp")
     
     timestamp_header = request.headers.get("X-Event-Timestamp")
-    logging.info(f"Received X-Event-Timestamp: {timestamp_header}")
+    logging.info("Received X-Event-Timestamp: %s", timestamp_header)
     if not timestamp_header:
         raise HTTPException(status_code=400, detail="Missing timestamp")
     
@@ -103,35 +96,12 @@ async def kount360_webhook_receiver(request: Request):
     body = await request.body()
     if not body:
         raise HTTPException(status_code=500, detail="Could not read body")
-    
-    # Create hash
-    hasher = hashlib.sha256()
-    hasher.update(timestamp_header.encode("utf-8"))
-    hasher.update(body)
-    
-    # Decode signature
-    signature_b64 = request.headers.get("X-Event-Signature")
-    if signature_b64:
-        logging.info("Raw Signature: %r", signature_b64)
-    if not signature_b64:
-        raise HTTPException(status_code=400, detail="Missing signature")
-    try:
-        signature = base64.b64decode(signature_b64)
-    except base64.binascii.Error as exc:
-        raise HTTPException(status_code=400, detail="Invalid signature encoding") from exc
-    
+           
     # Verify signature
-    try:
-        public_key.verify(
-            signature,
-            hasher.digest(),
-            padding.PKCS1v15(),
-            hashes.SHA256()
-        )
-    except Exception as exc:
-        logging.error("Could not verify signature")
-        #raise HTTPException(status_code=403, detail="Could not verify signature") from exc # Commented out for testing
-    
+    signature_b64 = request.headers.get("X-Event-Signature")
+    is_public_key_valid = pub_key_utils.verify_signature(signature_b64, body)
+    if not is_public_key_valid:
+        raise HTTPException(status_code=400, detail="Invalid signature")
     # Process message
     try:
         payload = json.loads(body)
