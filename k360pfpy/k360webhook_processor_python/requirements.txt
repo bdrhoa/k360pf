@@ -1,4 +1,5 @@
 fastapi
 uvicorn
 cryptography
+jwt
 -e ../k360_token_python
