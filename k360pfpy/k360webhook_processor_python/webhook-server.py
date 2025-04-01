@@ -39,15 +39,13 @@ Instructions:
    ```
 """
 
-import base64
-import hashlib
 import datetime
 import json
 import logging
 
 from fastapi import FastAPI, Request, HTTPException
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives import hashes
+from fastapi.responses import JSONResponse
+
 
 from k360_token_python import pub_key_utils
 from k360_token_python import token_lifespan
@@ -99,7 +97,7 @@ async def kount360_webhook_receiver(request: Request):
            
     # Verify signature
     signature_b64 = request.headers.get("X-Event-Signature")
-    is_public_key_valid = await pub_key_utils.verify_signature(signature_b64, body)
+    is_public_key_valid =  pub_key_utils.verify_signature(signature_b64, body)
     if not is_public_key_valid:
         raise HTTPException(status_code=400, detail="Invalid signature")
     # Process message
@@ -115,4 +113,5 @@ async def kount360_webhook_receiver(request: Request):
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=400, detail="Invalid JSON payload") from exc
     
-    return ""
+    # Return 200 OK explicitly
+    return JSONResponse(content={"status": "ok"}, status_code=200)
