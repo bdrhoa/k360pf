@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 # Default to sandbox. Override with env var if needed.
 KOUNT_USE_SANDBOX = os.getenv("KOUNT_USE_SANDBOX", "true").lower() == "true"
 
+TIMESTAMP_GRACE = datetime.timedelta(minutes=5)
+
 PUBLIC_KEY_URL_TEMPLATE = (
     "https://app-sandbox.kount.com/api/developer/ens/client/{}/public-key"
     if KOUNT_USE_SANDBOX else
@@ -70,7 +72,7 @@ public_key_manager = PublicKeyManager()
 @retry(wait=wait_fixed(10))
 async def fetch_public_key():
     """
-    Fetches the current ENS public key from the Kount API and stores it in the PublicKeyManager.
+    Fetches the current webhook public key from the Kount API and stores it in the PublicKeyManager.
     Falls back to the environment variable KOUNT_PUBLIC_KEY if a 403 or 418 error is received.
     """
 
@@ -113,54 +115,73 @@ async def fetch_public_key():
             logger.error("Failed to fetch public key: %s", e)
             raise HTTPException(status_code=500, detail=f"Failed to fetch public key: {e}") from e
                               
-async def verify_signature(signature_b64: str, payload: bytes) -> bool:
+async def verify_signature(signature_b64: str, timestamp_str: str, payload: bytes) -> bool:
     """
     Verifies a base64-encoded signature against the currently stored public key.
+    Includes timestamp grace period check and hashes (timestamp + payload) like the Go implementation.
 
     Args:
-        signature_b64 (str): The base64 encoded signature string.
-        payload (bytes): The exact payload that was signed (raw body from the webhook).
+        signature_b64 (str): The base64 encoded signature string from header.
+        timestamp_str (str): The ISO8601/RFC3339 formatted timestamp string from header.
+        payload (bytes): The raw webhook payload.
 
     Returns:
         bool: True if the signature is valid, False otherwise.
     """
 
-    # --- Step 1: Check if the signature is missing ---
+    # --- Step 1: Check if signature is present ---
     if not signature_b64:
         logger.error("Missing signature.")
         return False
 
-    logger.info("Raw Signature: %r", signature_b64)
-
-    # --- Step 2: Try to decode the base64 signature ---
+    # --- Step 2: Decode the base64 signature ---
     try:
         signature = base64.b64decode(signature_b64)
     except base64.binascii.Error:
         logger.error("Invalid base64 encoding in signature.")
         return False
 
-    # --- Step 3: Retrieve the stored public key ---
-    public_key_pem = await public_key_manager.get_public_key()
-    if not public_key_pem:
+    # --- Step 3: Get stored public key (base64 DER encoded, like Go) ---
+    public_key_b64 = public_key_manager.get_public_key()
+    if not public_key_b64:
         logger.error("Public key not loaded.")
         return False
 
-    # --- Step 4: Deserialize PEM into a usable public key object ---
+    # --- Step 4: Decode and load DER-encoded public key ---
     try:
-        public_key = serialization.load_pem_public_key(public_key_pem.encode("utf-8"))
+        der_data = base64.b64decode(public_key_b64)
+        public_key = serialization.load_der_public_key(der_data)
     except Exception as exc:
         logger.error("Failed to load public key: %s", exc)
         return False
 
-    # --- Step 5: Hash the payload ---
-    hasher = hashes.Hash(hashes.SHA256())
-    hasher.update(payload)
+    # --- Step 5: Validate timestamp ---
+    try:
+        timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+    except ValueError:
+        logger.error("Invalid timestamp format: %s", timestamp_str)
+        return False
 
-    # --- Step 6: Verify the signature against the hash ---
+    now = datetime.now(timezone.utc)
+    delta = now - timestamp
+    if delta > TIMESTAMP_GRACE:
+        logger.error("Timestamp too old. Delta: %s", delta)
+        return False
+    elif delta < -TIMESTAMP_GRACE:
+        logger.error("Timestamp too new. Delta: %s", delta)
+        return False
+
+    # --- Step 6: Create hash of timestamp + payload ---
+    hasher = hashes.Hash(hashes.SHA256())
+    hasher.update(timestamp_str.encode("utf-8"))
+    hasher.update(payload)
+    digest = hasher.finalize()
+
+    # --- Step 7: Verify the signature against the hash ---
     try:
         public_key.verify(
             signature,
-            hasher.finalize(),
+            digest,
             padding.PKCS1v15(),
             hashes.SHA256()
         )
@@ -169,7 +190,7 @@ async def verify_signature(signature_b64: str, payload: bytes) -> bool:
     except InvalidSignature:
         logger.error("Signature verification failed.")
         return False
-    
+        
 async def start_public_key_refresh_timer():
     """
     Starts an asynchronous loop that waits until the public key is near expiry and then refreshes it.
