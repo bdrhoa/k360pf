@@ -59,17 +59,15 @@ class PublicKeyManager:
         public_key (str): The currently loaded public key as a base64-encoded string.
         valid_until (int): The UNIX timestamp indicating when the public key expires.
     """
-    _instance = None
+    _instance: Optional["PublicKeyManager"] = None
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(PublicKeyManager, cls).__new__(cls, *args, **kwargs)
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            # initialize the attributes on instance creation, not in __init__
+            cls._instance.public_key = None
+            cls._instance.valid_until = 0
         return cls._instance
-
-    def __init__(self):
-        if not hasattr(self, "public_key"):
-            self.public_key = None
-            self.valid_until = 0
 
     def get_public_key(self) -> Optional[str]:
         """
@@ -90,6 +88,11 @@ class PublicKeyManager:
         """
         self.public_key = key
         self.valid_until = valid_until
+        
+    def reset(self):
+        """Reset public key state."""
+        self.public_key = None
+        self.valid_until = 0
 
 public_key_manager = PublicKeyManager()
 
