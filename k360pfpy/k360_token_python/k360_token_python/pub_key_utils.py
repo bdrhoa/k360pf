@@ -14,6 +14,7 @@ import os
 import time
 import logging
 import base64
+from typing import Optional
 
 import aiohttp
 from fastapi import HTTPException
@@ -25,12 +26,19 @@ from cryptography.exceptions import InvalidSignature
 
 from .jwt_utils import token_manager, fetch_or_refresh_token
 
+from .exceptions import (
+    InvalidSignatureError,
+    TimestampTooOldError,
+    TimestampTooNewError,
+    MissingPublicKeyError,
+    PublicKeyExpiredError
+)
+
+
 logger = logging.getLogger(__name__)
 
 # Default to sandbox. Override with env var if needed.
 KOUNT_USE_SANDBOX = os.getenv("KOUNT_USE_SANDBOX", "true").lower() == "true"
-
-TIMESTAMP_GRACE = datetime.timedelta(minutes=5)
 
 PUBLIC_KEY_URL_TEMPLATE = (
     "https://app-sandbox.kount.com/api/developer/ens/client/{}/public-key"
@@ -38,9 +46,18 @@ PUBLIC_KEY_URL_TEMPLATE = (
     "https://app.kount.com/api/developer/ens/client/{}/public-key"
 )
 
+
+# ---------------------------
+# Public Key Manager
+# ---------------------------
+
 class PublicKeyManager:
     """
     Singleton class to store and manage the current public key and its expiration time.
+
+    Attributes:
+        public_key (str): The currently loaded public key as a base64-encoded string.
+        valid_until (int): The UNIX timestamp indicating when the public key expires.
     """
     _instance = None
 
@@ -54,28 +71,42 @@ class PublicKeyManager:
             self.public_key = None
             self.valid_until = 0
 
-    def get_public_key(self):
+    def get_public_key(self) -> Optional[str]:
         """
         Returns the currently stored public key.
+
+        Returns:
+            Optional[str]: The base64-encoded public key or None if not loaded.
         """
         return self.public_key
 
     def set_public_key(self, key: str, valid_until: int):
         """
         Sets the current public key and its expiration timestamp.
+
+        Args:
+            key (str): The base64-encoded public key.
+            valid_until (int): The UNIX timestamp when the key expires.
         """
         self.public_key = key
         self.valid_until = valid_until
 
 public_key_manager = PublicKeyManager()
 
+# ---------------------------
+# Fetch Public Key
+# ---------------------------
+
 @retry(wait=wait_fixed(10))
 async def fetch_public_key():
     """
-    Fetches the current webhook public key from the Kount API and stores it in the PublicKeyManager.
-    Falls back to the environment variable KOUNT_PUBLIC_KEY if a 403 or 418 error is received.
-    """
+    Fetches the current webhook public key from the Kount ENS API and stores it in the PublicKeyManager.
 
+    If a 403 or 418 is returned, falls back to using the KOUNT_PUBLIC_KEY environment variable.
+
+    Raises:
+        HTTPException: If public key cannot be fetched or fallback is missing.
+    """
     kount_client_id = os.getenv("KOUNT_CLIENT_ID")
     if not kount_client_id:
         raise ValueError("kount_client_id environment variable not set.")
@@ -114,70 +145,92 @@ async def fetch_public_key():
         except Exception as e:
             logger.error("Failed to fetch public key: %s", e)
             raise HTTPException(status_code=500, detail=f"Failed to fetch public key: {e}") from e
-                              
-async def verify_signature(signature_b64: str, timestamp_str: str, payload: bytes) -> bool:
+
+# ---------------------------
+# Signature Verification
+# ---------------------------
+
+async def verify_signature(signature_b64: str, timestamp_str: str, payload: bytes, grace: timedelta = timedelta(minutes=5), now: Optional[datetime] = None) -> bool:
     """
     Verifies a base64-encoded signature against the currently stored public key.
-    Includes timestamp grace period check and hashes (timestamp + payload) like the Go implementation.
+
+    This includes:
+    - Decoding the signature.
+    - Checking public key presence and expiration.
+    - Checking timestamp validity.
+    - Hashing timestamp + payload.
+    - Verifying the RSA PKCS1v15 signature.
 
     Args:
-        signature_b64 (str): The base64 encoded signature string from header.
-        timestamp_str (str): The ISO8601/RFC3339 formatted timestamp string from header.
-        payload (bytes): The raw webhook payload.
+        signature_b64 (str): Base64 encoded signature from header.
+        timestamp_str (str): ISO8601/RFC3339 formatted timestamp from header.
+        payload (bytes): Raw webhook payload.
+        grace (timedelta): Allowed clock skew (default 5 minutes).
+        now (Optional[datetime]): Inject current time for testing.
+
+    Raises:
+        MissingPublicKeyError: If no public key is available.
+        PublicKeyExpiredError: If the stored public key is expired.
+        InvalidSignatureError: If the signature is invalid or can't be decoded.
+        TimestampTooOldError: If the timestamp is too old.
+        TimestampTooNewError: If the timestamp is too new.
 
     Returns:
-        bool: True if the signature is valid, False otherwise.
+        bool: True if the signature is valid.
     """
-
-    # --- Step 1: Check if signature is present ---
     if not signature_b64:
         logger.error("Missing signature.")
-        return False
+        raise InvalidSignatureError("Missing signature.")
 
-    # --- Step 2: Decode the base64 signature ---
+    # Decode signature
     try:
         signature = base64.b64decode(signature_b64)
-    except base64.binascii.Error:
+    except base64.binascii.Error as exc:
         logger.error("Invalid base64 encoding in signature.")
-        return False
+        raise InvalidSignatureError("Invalid base64 encoding in signature.") from exc
 
-    # --- Step 3: Get stored public key (base64 DER encoded, like Go) ---
+    # Get stored public key
     public_key_b64 = public_key_manager.get_public_key()
     if not public_key_b64:
         logger.error("Public key not loaded.")
-        return False
+        raise MissingPublicKeyError("Public key not loaded.")
 
-    # --- Step 4: Decode and load DER-encoded public key ---
+    # Check if public key is expired
+    if public_key_manager.valid_until and datetime.now(timezone.utc).timestamp() > public_key_manager.valid_until:
+        logger.error("Public key expired.")
+        raise PublicKeyExpiredError("Public key expired.")
+
+    # Load public key
     try:
         der_data = base64.b64decode(public_key_b64)
         public_key = serialization.load_der_public_key(der_data)
     except Exception as exc:
         logger.error("Failed to load public key: %s", exc)
-        return False
+        raise InvalidSignatureError("Failed to load public key.") from exc
 
-    # --- Step 5: Validate timestamp ---
+    # Validate timestamp
     try:
         timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
-    except ValueError:
+    except ValueError as exc:
         logger.error("Invalid timestamp format: %s", timestamp_str)
-        return False
+        raise InvalidSignatureError("Invalid timestamp format.") from exc
 
-    now = datetime.now(timezone.utc)
+    now = now or datetime.now(timezone.utc)
     delta = now - timestamp
-    if delta > TIMESTAMP_GRACE:
+    if delta > grace:
         logger.error("Timestamp too old. Delta: %s", delta)
-        return False
-    elif delta < -TIMESTAMP_GRACE:
+        raise TimestampTooOldError("Timestamp too old.")
+    elif delta < -grace:
         logger.error("Timestamp too new. Delta: %s", delta)
-        return False
+        raise TimestampTooNewError("Timestamp too new.")
 
-    # --- Step 6: Create hash of timestamp + payload ---
+    # Hash timestamp + payload
     hasher = hashes.Hash(hashes.SHA256())
     hasher.update(timestamp_str.encode("utf-8"))
     hasher.update(payload)
     digest = hasher.finalize()
 
-    # --- Step 7: Verify the signature against the hash ---
+    # Verify signature
     try:
         public_key.verify(
             signature,
@@ -187,14 +240,19 @@ async def verify_signature(signature_b64: str, timestamp_str: str, payload: byte
         )
         logger.info("Signature successfully verified.")
         return True
-    except InvalidSignature:
+    except InvalidSignature as exc:
         logger.error("Signature verification failed.")
-        return False
-        
+        raise InvalidSignatureError("Signature verification failed.") from exc
+
+# ---------------------------
+# Refresh Timer
+# ---------------------------
+
 async def start_public_key_refresh_timer():
     """
-    Starts an asynchronous loop that waits until the public key is near expiry and then refreshes it.
-    Runs indefinitely to ensure the public key remains valid.
+    Starts an asynchronous background task to refresh the public key when near expiry.
+
+    Waits until 2 minutes before expiration, then refreshes the key.
     """
     while True:
         current_time = int(time.time())
