@@ -229,7 +229,7 @@ async def verify_signature(signature_b64: str, timestamp_str: str, payload: byte
 
     # Hash timestamp + payload
     hasher = hashes.Hash(hashes.SHA256())
-    #hasher.update(timestamp_str.encode("utf-8"))
+    hasher.update(timestamp_str.encode("utf-8"))
     hasher.update(timestamp_str)
     hasher.update(payload)
     digest = hasher.finalize()
