@@ -2,10 +2,10 @@
   "name": "kount-k360pf-server",
   "version": "1.0.0",
   "description": "Kount K360 Payment Fraud Server",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "dev": "nodemon",
-    "start": "ts-node -r tsconfig-paths/register src/index.ts",
+    "start": "ts-node -r tsconfig-paths/register src/server.ts",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
