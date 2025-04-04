@@ -5,7 +5,8 @@
  *    npm install express axios axios-retry jsonwebtoken timers
  * 
  * 2. Set required environment variables:
- *    - API_KEY: Your API key for authentication.
+ *    - KOUNT_API_KEY: Your API key for authentication.
+ *    - KOUNT_PUBLIC_KEY: Your public key for webhook signature verification.
  * 
  * 3. Start the server:
  *    ts-node server.ts
