@@ -80,7 +80,7 @@ function simulateCreditCardAuthorization(merchantOrderId: string): Authorization
 }
 
 // Constants
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.KOUNT_API_KEY;
 const AUTH_SERVER_URL = "https://login.kount.com/oauth2/token";
 const KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true";
 const RETRY_INTERVAL = 10000; // 10 seconds
