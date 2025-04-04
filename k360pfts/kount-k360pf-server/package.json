@@ -1,4 +1,14 @@
 {
+  "name": "kount-k360pf-server",
+  "version": "1.0.0",
+  "description": "Kount K360 Payment Fraud Server",
+  "main": "server.ts",
+  "scripts": {
+    "start": "ts-node server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kount",
+  "license": "ISC",
   "dependencies": {
     "axios": "^1.8.2",
     "axios-retry": "^4.5.0",
