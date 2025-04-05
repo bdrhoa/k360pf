@@ -89,6 +89,7 @@ const publicKey = crypto_1.default.createPublicKey({
     format: "der",
     type: "spki",
 });
+//publicKey.padding = crypto.constants.RSA_PKCS1_PSS_PADDING;
 const timestampGrace = 5 * 60 * 1000; // 5 minutes in milliseconds
 if (!API_KEY) {
     throw new Error("API_KEY environment variable not set.");
@@ -216,6 +217,7 @@ function patchTransaction(kountOrderId, merchantOrderId) {
         }
     });
 }
+// Express endpoint using the public key in verification
 app.post("/kount360WebhookReceiver", (req, res) => {
     const timestampHeader = req.headers["x-event-timestamp"];
     const signatureBase64 = req.headers["x-event-signature"];
@@ -225,6 +227,7 @@ app.post("/kount360WebhookReceiver", (req, res) => {
     }
     const timestamp = new Date(timestampHeader);
     const now = new Date();
+    // Assume timestampGrace is defined elsewhere
     if (isNaN(timestamp.getTime()) ||
         now.getTime() - timestamp.getTime() > timestampGrace ||
         timestamp.getTime() - now.getTime() > timestampGrace) {
@@ -235,14 +238,19 @@ app.post("/kount360WebhookReceiver", (req, res) => {
     verifier.update(timestampHeader);
     verifier.update(JSON.stringify(req.body));
     const signature = Buffer.from(signatureBase64, "base64");
-    if (!verifier.verify(publicKey, signature)) {
+    const isVerified = verifier.verify({
+        key: publicKey,
+        padding: crypto_1.default.constants.RSA_PKCS1_PSS_PADDING,
+        // Optionally, if needed:
+        // saltLength: crypto.constants.RSA_PSS_SALTLEN_DIGEST,
+    }, signature);
+    if (!isVerified) {
         logError("Signature verification failed");
         console.log("Signature verification failed:", signature.toString("base64"));
         res.status(403).send("Could not verify signature");
         return;
     }
     // Process the valid webhook payload
-    // ...
     logError("Webhook received and verified successfully");
     console.log("Webhook payload:", JSON.stringify(req.body, null, 2));
     res.sendStatus(200);
