@@ -235,6 +235,9 @@ app.post("/kount360WebhookReceiver", (req, res) => {
         return;
     }
     const verifier = crypto_1.default.createVerify("RSA-SHA256");
+    console.log("Timestamp Header:", timestampHeader);
+    console.log(JSON.stringify(req.body));
+    console.log("Signature Base64:", signatureBase64);
     verifier.update(timestampHeader);
     verifier.update(JSON.stringify(req.body));
     const signature = Buffer.from(signatureBase64, "base64");
