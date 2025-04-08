@@ -87,7 +87,6 @@ function simulateCreditCardAuthorization(merchantOrderId: string): Authorization
 
 // Constants For API
 const API_KEY = process.env.KOUNT_API_KEY;
-const AUTH_SERVER_URL = "https://login.kount.com/oauth2/token";
 const KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true";
 const RETRY_INTERVAL = 10000; // 10 seconds
 const REFRESH_BUFFER = 120; // 2 minutes before expiration
@@ -104,16 +103,11 @@ const publicKey = crypto.createPublicKey({
   type: "spki",
 });
 
-//publicKey.padding = crypto.constants.RSA_PKCS1_PSS_PADDING;
-
-//const timestampGrace = 5 * 60 * 1000; // 5 minutes in milliseconds
-const timestampGrace = 5 * 24 * 60 * 60 * 1000; // 5 Days in milliseconds
-
+const timestampGrace = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 if (!API_KEY) {
     throw new Error("API_KEY environment variable not set.");
 }
-console.log("API_KEY:", API_KEY);
 
 // Apply axiosRetry globally
 axiosRetry(axios, {
@@ -267,19 +261,11 @@ app.post("/kount360WebhookReceiver", (req: Request, res: Response): void => {
       return;
     }
 
-    console.log("Node version:", process.version);
-    console.log("OpenSSL version:", process.versions.openssl);
-    
-    console.log("timestampHeader (hex):", Buffer.from(timestampHeader, 'utf8').toString('hex'));
-    console.log("rawBody (hex):", Buffer.from(rawBody, 'utf8').toString('hex'));
-    
+    // Verify the signature
     const verifier = crypto.createVerify("RSA-SHA256");
     verifier.update(Buffer.from(timestampHeader, 'utf8'));
     verifier.update(Buffer.from(rawBody, 'utf8'));
     verifier.end();
-    
-    console.log("Timestamp Header:", timestampHeader);
-    console.log(JSON.stringify(req.body));
     
     const signature = Buffer.from(signatureBase64, "base64");
   
