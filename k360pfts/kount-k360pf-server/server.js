@@ -45,7 +45,11 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto_1 = __importDefault(require("crypto"));
 const app = (0, express_1.default)();
-app.use(express_1.default.json());
+app.use(express_1.default.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf.toString('utf8');
+    }
+}));
 const LOG_FILE = path_1.default.join(__dirname, 'kount.log');
 function logError(message) {
     const logEntry = `${new Date().toISOString()} - ERROR: ${message}\n`;
@@ -90,7 +94,8 @@ const publicKey = crypto_1.default.createPublicKey({
     type: "spki",
 });
 //publicKey.padding = crypto.constants.RSA_PKCS1_PSS_PADDING;
-const timestampGrace = 5 * 60 * 1000; // 5 minutes in milliseconds
+//const timestampGrace = 5 * 60 * 1000; // 5 minutes in milliseconds
+const timestampGrace = 5 * 24 * 60 * 60 * 1000; // 5 Days in milliseconds
 if (!API_KEY) {
     throw new Error("API_KEY environment variable not set.");
 }
@@ -234,18 +239,27 @@ app.post("/kount360WebhookReceiver", (req, res) => {
         res.status(400).send("Invalid timestamp");
         return;
     }
+    const rawBody = req.rawBody;
+    if (!rawBody) {
+        res.status(400).send("Missing raw body");
+        return;
+    }
+    console.log("Node version:", process.version);
+    console.log("OpenSSL version:", process.versions.openssl);
+    console.log("timestampHeader (hex):", Buffer.from(timestampHeader, 'utf8').toString('hex'));
+    console.log("rawBody (hex):", Buffer.from(rawBody, 'utf8').toString('hex'));
     const verifier = crypto_1.default.createVerify("RSA-SHA256");
+    verifier.update(Buffer.from(timestampHeader, 'utf8'));
+    verifier.update(Buffer.from(rawBody, 'utf8'));
+    verifier.end();
     console.log("Timestamp Header:", timestampHeader);
     console.log(JSON.stringify(req.body));
-    console.log("Signature Base64:", signatureBase64);
-    verifier.update(timestampHeader);
-    verifier.update(JSON.stringify(req.body));
     const signature = Buffer.from(signatureBase64, "base64");
     const isVerified = verifier.verify({
         key: publicKey,
         padding: crypto_1.default.constants.RSA_PKCS1_PSS_PADDING,
         // Optionally, if needed:
-        // saltLength: crypto.constants.RSA_PSS_SALTLEN_DIGEST,
+        saltLength: crypto_1.default.constants.RSA_PSS_SALTLEN_DIGEST,
     }, signature);
     if (!isVerified) {
         logError("Signature verification failed");
