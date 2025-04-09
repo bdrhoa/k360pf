@@ -38,6 +38,8 @@ Instructions:
 
 import json
 import logging
+from datetime import datetime, timezone
+
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
@@ -89,8 +91,11 @@ async def kount360_webhook_receiver(request: Request):
         raise HTTPException(status_code=500, detail="Empty request body")
 
     # Signature verification with exception handling
+    #custom_now = datetime.strptime("2025-04-04T20:46:04Z", "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) # For testing purposes
     try:
+        #await pub_key_utils.verify_signature(signature_b64, timestamp_header, body, now=custom_now)
         await pub_key_utils.verify_signature(signature_b64, timestamp_header, body)
+
     except MissingPublicKeyError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except PublicKeyExpiredError as exc:
