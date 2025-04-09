@@ -197,6 +197,8 @@ async def verify_signature(signature_b64: str, timestamp_str: str, payload: byte
     if not public_key_b64:
         logger.error("Public key not loaded.")
         raise MissingPublicKeyError("Public key not loaded.")
+    
+    
 
     # Check if public key is expired
     if public_key_manager.valid_until and datetime.now(timezone.utc).timestamp() > public_key_manager.valid_until:
@@ -226,20 +228,18 @@ async def verify_signature(signature_b64: str, timestamp_str: str, payload: byte
     elif delta < -grace:
         logger.error("Timestamp too new. Delta: %s", delta)
         raise TimestampTooNewError("Timestamp too new.")
-
-    # Hash timestamp + payload
-    hasher = hashes.Hash(hashes.SHA256())
-    hasher.update(timestamp_str.encode("utf-8"))
-    hasher.update(timestamp_str)
-    hasher.update(payload)
-    digest = hasher.finalize()
+    
+    digest = timestamp_str.encode("utf-8") + payload
 
     # Verify signature
     try:
         public_key.verify(
             signature,
             digest,
-            padding.PKCS1v15(),
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=hashes.SHA256().digest_size  # Should be 32 bytes
+            ),
             hashes.SHA256()
         )
         logger.info("Signature successfully verified.")
