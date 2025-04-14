@@ -54,8 +54,16 @@ from k360_token_python import PublicKeyExpiredError
 
 app = FastAPI(lifespan=token_lifespan(use_public_key=True))
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+
+# Configure logging to write to a file named kount.log
+logging.basicConfig(
+    level=logging.ERROR,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("kount.log"),
+        logging.StreamHandler()
+    ]
+)
 
 def simulate_cancel_order():
     """Simulates the cancellation of an order by logging a message."""
@@ -97,14 +105,19 @@ async def kount360_webhook_receiver(request: Request):
         await pub_key_utils.verify_signature(signature_b64, timestamp_header, body)
 
     except MissingPublicKeyError as exc:
+        logging.error("MissingPublicKeyError")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except PublicKeyExpiredError as exc:
+        logging.error("PublicKeyExpiredError")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except InvalidSignatureError as exc:
+        logging.error("InvalidSignatureError")
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except TimestampTooOldError as exc:
+        logging.error("TimestampTooOldError")
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except TimestampTooNewError as exc:
+        logging.error("TimestampTooNewError")
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # Process message
@@ -118,6 +131,7 @@ async def kount360_webhook_receiver(request: Request):
         else:
             logging.error("Unexpected newValue: %s", new_value)
     except json.JSONDecodeError as exc:
+        logging.error("Invalid JSON payload: %s", payload)
         raise HTTPException(status_code=400, detail="Invalid JSON payload") from exc
 
     # Return 200 OK explicitly
