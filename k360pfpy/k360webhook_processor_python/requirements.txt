@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 cryptography
-jwt
+PyJWT>=2.0.0
 aiohttp
 asyncio
 tenacity

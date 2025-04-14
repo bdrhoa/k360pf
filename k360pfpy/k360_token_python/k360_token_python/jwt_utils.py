@@ -12,7 +12,7 @@ import asyncio
 import os
 import time
 import logging
-import jwt
+import jwt as pyjwt
 import aiohttp
 
 from fastapi import HTTPException
@@ -129,10 +129,10 @@ async def start_token_refresh_timer(token_manager: TokenManager):
     while True:
         current_token = token_manager.get_access_token()
         try:
-            decoded = jwt.decode(current_token, options={"verify_signature": False})
+            decoded = pyjwt.decode(current_token, options={"verify_signature": False})
             exp_time = decoded["exp"] - REFRESH_TIME_BUFFER
             time_until_refresh = exp_time - int(time.time())
-        except jwt.DecodeError:
+        except pyjwt.DecodeError:
             time_until_refresh = 0
         if time_until_refresh > 0:
             await asyncio.sleep(time_until_refresh)
