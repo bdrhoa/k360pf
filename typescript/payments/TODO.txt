@@ -1,0 +1,5 @@
+cd typescript/payments
+
+npm install       # install all workspace packages
+npm run dev:api   # run API processor
+npm run build     # build both api and webhook
