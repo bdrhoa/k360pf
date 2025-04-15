@@ -1,12 +1,15 @@
 {
-  "name": "kount-k360pf-server",
+  "name": "kount-k360-payments",
   "version": "1.0.0",
-  "description": "Kount K360 Payment Fraud Server",
-  "main": "server.js",
+  "private": true,
+  "description": "Kount K360 Payment Fraud Monorepo",
+  "workspaces": ["api", "webhook"],
   "scripts": {
     "dev": "nodemon",
-    "start": "ts-node -r tsconfig-paths/register src/server.ts",
-    "build": "tsc",
+    "start": "ts-node -r tsconfig-paths/register api/src/index.ts",
+    "build": "tsc -b api webhook",
+    "dev:api": "ts-node-dev --respawn api/src/index.ts",
+    "dev:webhook": "ts-node-dev --respawn webhook/src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Kount",
@@ -21,11 +24,13 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
-    "@types/jsonwebtoken": "^9.0.9"
+    "@types/jsonwebtoken": "^9.0.9",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0",
+    "ts-node-dev": "^2.0.0",
+    "nodemon": "^3.0.0"
   },
-  "_moduleDirectories": [
-    "node_modules_custom"
-  ],
+  "_moduleDirectories": ["node_modules_custom"],
   "_moduleAliases": {
     "@src": "./dist"
   }
