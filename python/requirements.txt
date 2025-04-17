@@ -1,8 +1,0 @@
-fastapi
-uvicorn
-cryptography
-PyJWT>=2.0.0
-aiohttp
-asyncio
-tenacity
--e ../k360_token_python

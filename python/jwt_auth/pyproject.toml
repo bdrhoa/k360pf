@@ -3,7 +3,16 @@ name = "k360_token_python"
 version = "0.1.0"
 description = "JWT token management utilities for Kount API"
 authors = [{ name = "Brad Rhoads", email = "brad.rhoads@kount.com" }]
-dependencies = []
+dependencies = [
+    "PyJWT>=2.0.0",
+    "aiohttp",
+    "cryptography",
+    "tenacity",
+    "fastapi"
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
 
 [build-system]
 requires = ["setuptools"]
@@ -17,3 +26,9 @@ asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

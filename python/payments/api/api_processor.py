@@ -166,8 +166,8 @@ import random
 import asyncio
 import aiohttp
 
-from k360_token_python import token_manager
-from k360_token_python import token_lifespan
+from k360_jwt_auth import token_manager
+from k360_jwt_auth import token_lifespan
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
