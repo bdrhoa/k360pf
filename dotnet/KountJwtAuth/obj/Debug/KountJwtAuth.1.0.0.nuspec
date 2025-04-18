@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>KountJwtAuth</id>
+    <version>1.0.0</version>
+    <authors>Your Name</authors>
+    <description>.NET Core library for managing OAuth2 JWT tokens for Kount API</description>
+    <repository url="https://github.com/bdrhoa/k360pf" />
+    <dependencies>
+      <group targetFramework="net7.0">
+        <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Http.Polly" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="7.0.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/bin/Debug/net7.0/KountJwtAuth.dll" target="lib/net7.0/KountJwtAuth.dll" />
+  </files>
+</package>
