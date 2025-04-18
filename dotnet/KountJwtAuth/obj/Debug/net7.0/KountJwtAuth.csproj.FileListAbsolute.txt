@@ -1,0 +1,12 @@
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/bin/Debug/net7.0/KountJwtAuth.deps.json
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/bin/Debug/net7.0/KountJwtAuth.dll
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/bin/Debug/net7.0/KountJwtAuth.pdb
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/obj/Debug/net7.0/KountJwtAuth.csproj.AssemblyReference.cache
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/obj/Debug/net7.0/KountJwtAuth.GeneratedMSBuildEditorConfig.editorconfig
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/obj/Debug/net7.0/KountJwtAuth.AssemblyInfoInputs.cache
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/obj/Debug/net7.0/KountJwtAuth.AssemblyInfo.cs
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/obj/Debug/net7.0/KountJwtAuth.csproj.CoreCompileInputs.cache
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/obj/Debug/net7.0/KountJwtAuth.dll
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/obj/Debug/net7.0/refint/KountJwtAuth.dll
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/obj/Debug/net7.0/KountJwtAuth.pdb
+/Users/brad/Dropbox/Documents/src/kount/k360/dotnet/KountJwtAuth/obj/Debug/net7.0/ref/KountJwtAuth.dll
