@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -49,7 +50,7 @@ namespace KountJwtAuth.Services
             _httpClient = httpClient;
             _configuration = configuration;
             _logger = logger;
-            _authUrl = configuration["Kount:AuthUrl"] ?? throw new ArgumentNullException("Kount:AuthUrl");
+            _authUrl = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token";
             _apiKey = configuration["Kount:ApiKey"] ?? throw new ArgumentNullException("Kount:ApiKey");
         }
 
@@ -76,14 +77,22 @@ namespace KountJwtAuth.Services
             _logger.LogInformation("Refreshing Kount access token...");
             var request = new HttpRequestMessage(HttpMethod.Post, _authUrl);
             request.Headers.Authorization = new AuthenticationHeaderValue("Basic", _apiKey);
-            request.Content = new StringContent("grant_type=client_credentials", Encoding.UTF8, "application/x-www-form-urlencoded");
-
+            request.Content = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("grant_type", "client_credentials"),
+                new KeyValuePair<string, string>("scope", "k1_integration_api")
+            });
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+            
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            
             var response = await _httpClient.SendAsync(request); // Retry handled by Polly
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Received token response: {Json}", json);
             var token = JsonSerializer.Deserialize<TokenResponse>(json);
-
+            _logger.LogInformation("Deserialized token response: {Token}", token);
             if (token?.AccessToken == null || token.ExpiresIn <= 0)
             {
                 throw new Exception("Invalid token response from Kount API");
@@ -97,9 +106,16 @@ namespace KountJwtAuth.Services
 
     public class TokenResponse
     {
-    public string AccessToken { get; set; } = string.Empty;
+        [JsonPropertyName("access_token")]
+        public string AccessToken { get; set; } = string.Empty;
+
+        [JsonPropertyName("expires_in")]
         public int ExpiresIn { get; set; }
-    public string TokenType { get; set; } = string.Empty;
-    public string Scope { get; set; } = string.Empty;
+
+        [JsonPropertyName("token_type")]
+        public string TokenType { get; set; } = string.Empty;
+
+        [JsonPropertyName("scope")]
+        public string Scope { get; set; } = string.Empty;
     }
 }
