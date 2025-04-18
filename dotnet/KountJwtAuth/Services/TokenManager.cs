@@ -39,6 +39,7 @@ namespace KountJwtAuth.Services
 
     public class TokenService
     {
+        private readonly SemaphoreSlim _refreshLock = new(1, 1);
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
         private readonly ILogger<TokenService> _logger;
@@ -54,7 +55,6 @@ namespace KountJwtAuth.Services
             _logger = logger;
             _authUrl = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token";
             _apiKey = configuration["Kount:ApiKey"] ?? throw new ArgumentNullException("Kount:ApiKey");
-            _autoRefreshTimer = new Timer(async _ => await AutoRefreshCallback(), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
         }
 
         /// <summary>
@@ -68,6 +68,15 @@ namespace KountJwtAuth.Services
             {
                 await RefreshTokenAsync();
             }
+            
+            if (_autoRefreshTimer == null)
+            {
+                _autoRefreshTimer = new Timer(async _ =>
+                {
+                    await AutoRefreshCallback();
+                }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+            }
+
             return manager.GetAccessToken();
         }
 
@@ -77,33 +86,41 @@ namespace KountJwtAuth.Services
         /// </summary>
         private async Task RefreshTokenAsync()
         {
-            _logger.LogInformation("Refreshing Kount access token...");
-            var request = new HttpRequestMessage(HttpMethod.Post, _authUrl);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", _apiKey);
-            request.Content = new FormUrlEncodedContent(new[]
+            await _refreshLock.WaitAsync();
+            try
             {
-                new KeyValuePair<string, string>("grant_type", "client_credentials"),
-                new KeyValuePair<string, string>("scope", "k1_integration_api")
-            });
-            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-            
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            
-            var response = await _httpClient.SendAsync(request); // Retry handled by Polly
-            response.EnsureSuccessStatusCode();
+                _logger.LogInformation("Refreshing Kount access token...");
+                var request = new HttpRequestMessage(HttpMethod.Post, _authUrl);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", _apiKey);
+                request.Content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("grant_type", "client_credentials"),
+                    new KeyValuePair<string, string>("scope", "k1_integration_api")
+                });
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
+                
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                
+                var response = await _httpClient.SendAsync(request); // Retry handled by Polly
+                response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation("Received token response: {Json}", json);
-            var token = JsonSerializer.Deserialize<TokenResponse>(json);
-            _logger.LogInformation("Deserialized token response: {Token}", token);
-            if (token?.AccessToken == null || token.ExpiresIn <= 0)
-            {
-                throw new Exception("Invalid token response from Kount API");
+                var json = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation("Received token response: {Json}", json);
+                var token = JsonSerializer.Deserialize<TokenResponse>(json);
+                _logger.LogInformation("Deserialized token response: {Token}", token);
+                if (token?.AccessToken == null || token.ExpiresIn <= 0)
+                {
+                    throw new Exception("Invalid token response from Kount API");
+                }
+
+                var expiration = DateTime.UtcNow.AddSeconds(token.ExpiresIn);
+                TokenManager.Instance.SetAccessToken(token.AccessToken, expiration);
+                _logger.LogInformation("Token successfully refreshed, expires at {Expiration}", expiration);
             }
-
-            var expiration = DateTime.UtcNow.AddSeconds(token.ExpiresIn).Subtract(_refreshBuffer);
-            TokenManager.Instance.SetAccessToken(token.AccessToken, expiration);
-            _logger.LogInformation("Token successfully refreshed, expires at {Expiration}", expiration);
+            finally
+            {
+                _refreshLock.Release();
+            }
         }
 
         private async Task AutoRefreshCallback()

@@ -40,6 +40,9 @@ namespace ClientDemoApp
 
             Console.WriteLine("Retrieved JWT Token:");
             Console.WriteLine(token);
+
+            Console.WriteLine("Press Ctrl+C to exit. Token auto-refresh will continue to run in the background.");
+            await Task.Delay(Timeout.Infinite);
         }
     }
 }
