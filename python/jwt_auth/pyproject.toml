@@ -1,5 +1,5 @@
 [project]
-name = "k360_token_python"
+name = "k360_jwt_auth"
 version = "0.1.0"
 description = "JWT token management utilities for Kount API"
 authors = [{ name = "Brad Rhoads", email = "brad.rhoads@kount.com" }]
@@ -7,12 +7,11 @@ dependencies = [
     "PyJWT>=2.0.0",
     "aiohttp",
     "cryptography",
-    "tenacity",
-    "fastapi"
+    "tenacity"
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "fastapi", "httpx"]
 
 [build-system]
 requires = ["setuptools"]

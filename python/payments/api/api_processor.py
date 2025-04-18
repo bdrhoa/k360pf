@@ -1,6 +1,6 @@
 #USAGE:
 #pip3 install fastapi uvicorn aiohttp pyjwt tenacity "fastapi[standard]""
-#uvicorn k360pfauthmerchserver:app --reload  // start the server
+#uvicorn api_processor:app --reload  // start the server
 #test endpoint: 
 '''
 curl --request POST \
