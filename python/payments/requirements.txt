@@ -1,1 +1,14 @@
+# Editable install of shared auth library
 --editable ../jwt_auth
+
+# Core server requirements
+fastapi
+uvicorn
+
+# Optional: tools for testing and HTTP requests
+httpx
+pytest
+pytest-asyncio
+
+# Optional: support for environment variables
+python-dotenv
