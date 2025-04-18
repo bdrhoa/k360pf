@@ -44,13 +44,13 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 
-from k360_token_python import pub_key_utils
-from k360_token_python import token_lifespan
-from k360_token_python import InvalidSignatureError
-from k360_token_python import TimestampTooOldError
-from k360_token_python import TimestampTooNewError
-from k360_token_python import MissingPublicKeyError
-from k360_token_python import PublicKeyExpiredError
+from k360_jwt_auth import pub_key_utils
+from k360_jwt_auth import token_lifespan
+from k360_jwt_auth import InvalidSignatureError
+from k360_jwt_auth import TimestampTooOldError
+from k360_jwt_auth import TimestampTooNewError
+from k360_jwt_auth import MissingPublicKeyError
+from k360_jwt_auth import PublicKeyExpiredError
 
 app = FastAPI(lifespan=token_lifespan(use_public_key=True))
 
