@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Threading;
 
 namespace KountJwtAuth.Services
 {
@@ -44,6 +45,7 @@ namespace KountJwtAuth.Services
         private readonly string _authUrl;
         private readonly string _apiKey;
         private readonly TimeSpan _refreshBuffer = TimeSpan.FromMinutes(2);
+        private Timer? _autoRefreshTimer;
 
         public TokenService(HttpClient httpClient, IConfiguration configuration, ILogger<TokenService> logger)
         {
@@ -52,6 +54,7 @@ namespace KountJwtAuth.Services
             _logger = logger;
             _authUrl = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token";
             _apiKey = configuration["Kount:ApiKey"] ?? throw new ArgumentNullException("Kount:ApiKey");
+            _autoRefreshTimer = new Timer(async _ => await AutoRefreshCallback(), null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
         }
 
         /// <summary>
@@ -98,9 +101,26 @@ namespace KountJwtAuth.Services
                 throw new Exception("Invalid token response from Kount API");
             }
 
-            var expiration = DateTime.UtcNow.AddSeconds(token.ExpiresIn);
+            var expiration = DateTime.UtcNow.AddSeconds(token.ExpiresIn).Subtract(_refreshBuffer);
             TokenManager.Instance.SetAccessToken(token.AccessToken, expiration);
             _logger.LogInformation("Token successfully refreshed, expires at {Expiration}", expiration);
+        }
+
+        private async Task AutoRefreshCallback()
+        {
+            try
+            {
+                var manager = TokenManager.Instance;
+                if (manager.IsTokenNearExpiry(_refreshBuffer))
+                {
+                    _logger.LogInformation("Auto-refreshing Kount access token...");
+                    await RefreshTokenAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to auto-refresh Kount access token.");
+            }
         }
     }
 
