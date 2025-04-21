@@ -1,4 +1,3 @@
-// Program.cs
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -9,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Extensions.Http;
+using Serilog;
 
 namespace ClientDemoApp
 {
@@ -20,41 +20,46 @@ namespace ClientDemoApp
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddEnvironmentVariables()
                 .Build();
-            
-            var apiKey = configuration["KOUNT_API_KEY"];
-            if (string.IsNullOrEmpty(apiKey))
+
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.File("kount.log", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+
+            try
             {
-                Console.WriteLine("Warning: KOUNT_API_KEY environment variable is not set.");
+                Log.Information("Starting application...");
+
+                var host = Host.CreateDefaultBuilder(args)
+                    .UseSerilog()
+                    .ConfigureServices((context, services) =>
+                    {
+                        services.AddSingleton<IConfiguration>(configuration);
+
+                        services.AddHttpClient<TokenService>()
+                            .AddPolicyHandler(HttpPolicyExtensions
+                                .HandleTransientHttpError()
+                                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
+
+                        services.AddSingleton(TokenManager.Instance);
+                    })
+                    .Build();
+
+                var tokenService = host.Services.GetRequiredService<TokenService>();
+                var token = await tokenService.GetValidTokenAsync();
+
+                Log.Information("Retrieved JWT Token: {Token}", token);
+                Log.Information("Press Ctrl+C to exit. Token auto-refresh will continue running.");
+
+                await Task.Delay(Timeout.Infinite);
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("KOUNT_API_KEY successfully loaded.");
+                Log.Fatal(ex, "Application terminated unexpectedly");
             }
-            var host = Host.CreateDefaultBuilder(args)
-
-                .ConfigureServices((context, services) =>
-                {
-                    services.AddSingleton<IConfiguration>(configuration);
-
-                    services.AddLogging(configure => configure.AddConsole());
-
-                    services.AddHttpClient<TokenService>()
-                        .AddPolicyHandler(HttpPolicyExtensions
-                            .HandleTransientHttpError()
-                            .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
-
-                    services.AddSingleton(TokenManager.Instance);
-                })
-                .Build();
-
-            var tokenService = host.Services.GetRequiredService<TokenService>();
-            var token = await tokenService.GetValidTokenAsync();
-
-            Console.WriteLine("Retrieved JWT Token:");
-            Console.WriteLine(token);
-
-            Console.WriteLine("Press Ctrl+C to exit. Token auto-refresh will continue to run in the background.");
-            await Task.Delay(Timeout.Infinite);
+            finally
+            {
+                Log.CloseAndFlush();
+            }
         }
     }
 }
