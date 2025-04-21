@@ -18,6 +18,7 @@ namespace KountJwtAuth.Tests
         public async Task GetValidTokenAsync_RefreshesAndReturnsToken()
         {
             // Arrange
+            TokenManager.Instance.SetAccessToken(string.Empty, DateTime.MinValue);
             var tokenJson = "{ \"access_token\": \"mocktoken\", \"expires_in\": 3600 }";
             var handlerMock = new Mock<HttpMessageHandler>();
             handlerMock
