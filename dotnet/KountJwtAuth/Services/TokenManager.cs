@@ -54,7 +54,7 @@ namespace KountJwtAuth.Services
             _configuration = configuration;
             _logger = logger;
             _authUrl = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token";
-            _apiKey = configuration["Kount:ApiKey"] ?? throw new ArgumentNullException("Kount:ApiKey");
+            _apiKey = configuration["KOUNT_API_KEY"] ?? throw new ArgumentNullException("KOUNT_API_KEY");
         }
 
         /// <summary>

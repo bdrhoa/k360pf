@@ -39,7 +39,7 @@ namespace KountJwtAuth.Tests
                 .AddInMemoryCollection((IEnumerable<KeyValuePair<string, string?>>)new[]
                 {
                     new KeyValuePair<string, string?>("Kount:AuthUrl", "https://mock.token.url"),
-                    new KeyValuePair<string, string?>("Kount:ApiKey", "mockApiKey")
+                    new KeyValuePair<string, string?>("KOUNT_API_KEY", "mockApiKey")
                 })
                 .Build();
 

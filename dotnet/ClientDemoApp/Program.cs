@@ -1,4 +1,4 @@
-﻿// Program.cs
+// Program.cs
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -16,14 +16,26 @@ namespace ClientDemoApp
     {
         public static async Task Main(string[] args)
         {
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddEnvironmentVariables()
+                .Build();
+            
+            var apiKey = configuration["KOUNT_API_KEY"];
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                Console.WriteLine("Warning: KOUNT_API_KEY environment variable is not set.");
+            }
+            else
+            {
+                Console.WriteLine("KOUNT_API_KEY successfully loaded.");
+            }
             var host = Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((context, config) =>
-                {
-                    config.SetBasePath(Directory.GetCurrentDirectory());
-                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-                })
+
                 .ConfigureServices((context, services) =>
                 {
+                    services.AddSingleton<IConfiguration>(configuration);
+
                     services.AddLogging(configure => configure.AddConsole());
 
                     services.AddHttpClient<TokenService>()
