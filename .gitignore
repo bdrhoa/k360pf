@@ -361,3 +361,12 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,node,go,java
 .DS_Store
+
+# Salesforce DX
+.sfdx/
+
+# VS Code settings
+.vscode/
+
+# Apex test results
+test-results/
