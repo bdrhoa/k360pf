@@ -14,11 +14,14 @@ private class KountTokenManagerTest {
     static void testTokenRefreshAndGetToken() {
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator());
 
-        delete [SELECT Id FROM KountAuthSetting__c WHERE Name = 'Default' LIMIT 1];
+        KountAuthSetting__c setting = KountAuthSetting__c.getInstance();
+        setting.AccessToken__c = null;
+        setting.ExpirationEpoch__c = 0;
+        upsert setting;
 
         Test.startTest();
-        KountTokenManager.refreshToken();
-        String token = KountTokenManager.getToken();
+        KountTokenManager.refreshToken(setting);
+        String token = KountTokenManager.getToken(setting);
         Test.stopTest();
 
         System.assertEquals('test_token', token);
@@ -27,6 +30,13 @@ private class KountTokenManagerTest {
     @IsTest
     static void testScheduler() {
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator());
+
+        KountAuthSetting__c setting = KountAuthSetting__c.getInstance();
+        setting.AccessToken__c = null;
+        setting.ExpirationEpoch__c = 0;
+        upsert setting;
+        KountTokenRefresher.testSetting = setting;
+
         Test.startTest();
         String jobId = System.schedule('Test Refresh Job', '0 0 0 1 1 ? 2099', new KountTokenRefresher());
         Test.stopTest();
