@@ -370,3 +370,4 @@ pyrightconfig.json
 
 # Apex test results
 test-results/
+.sf/
