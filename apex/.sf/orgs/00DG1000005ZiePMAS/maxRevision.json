@@ -1,0 +1,24 @@
+{
+    "fileVersion": 0,
+    "serverMaxRevisionCounter": 3,
+    "sourceMembers": {
+        "CustomField__KountAuthSetting__c.AccessToken__c": {
+            "memberType": "CustomField",
+            "serverRevisionCounter": 1,
+            "lastRetrievedFromServer": null,
+            "isNameObsolete": false
+        },
+        "CustomField__KountAuthSetting__c.ExpirationEpoch__c": {
+            "memberType": "CustomField",
+            "serverRevisionCounter": 2,
+            "lastRetrievedFromServer": null,
+            "isNameObsolete": false
+        },
+        "CustomObject__KountAuthSetting__c": {
+            "memberType": "CustomObject",
+            "serverRevisionCounter": 3,
+            "lastRetrievedFromServer": 3,
+            "isNameObsolete": false
+        }
+    }
+}
