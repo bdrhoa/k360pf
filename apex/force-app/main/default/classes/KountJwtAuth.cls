@@ -1,3 +1,23 @@
+// KountJwtAuth.cls
+// This class handles the JWT authentication for Kount API.
+// It retrieves the access token using the client credentials grant type.
+// It uses a custom setting to store the API key securely.
+// The class includes detailed logging for debugging purposes.
+// The class is designed to be used in a Salesforce environment.
+// It is a part of the Kount integration package.   
+
+/* 
+Usage Example:
+
+try {
+    String token = KountJwtAuth.getAccessToken();
+    System.debug('✅ Kount access token: ' + token);
+} catch (Exception e) {
+    System.debug('❌ Error getting token: ' + e.getMessage());
+}
+    
+*/
+
 public class KountJwtAuth {
     public static String getAccessToken() {
         Http http = new Http();
