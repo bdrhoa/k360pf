@@ -1,6 +1,6 @@
 {
     "fileVersion": 0,
-    "serverMaxRevisionCounter": 48,
+    "serverMaxRevisionCounter": 72,
     "sourceMembers": {
         "CustomField__KountAuthSetting__c.AccessToken__c": {
             "memberType": "CustomField",
@@ -16,44 +16,62 @@
         },
         "CustomObject__KountAuthSetting__c": {
             "memberType": "CustomObject",
-            "serverRevisionCounter": 3,
-            "lastRetrievedFromServer": 3,
+            "serverRevisionCounter": 49,
+            "lastRetrievedFromServer": 49,
             "isNameObsolete": false
         },
         "Profile__Admin": {
             "memberType": "Profile",
-            "serverRevisionCounter": 44,
+            "serverRevisionCounter": 71,
             "lastRetrievedFromServer": null,
             "isNameObsolete": false
         },
         "ApexClass__KountJwtAuth": {
             "memberType": "ApexClass",
-            "serverRevisionCounter": 45,
-            "lastRetrievedFromServer": 45,
+            "serverRevisionCounter": 72,
+            "lastRetrievedFromServer": 72,
             "isNameObsolete": false
         },
         "ApexClass__KountApiService": {
             "memberType": "ApexClass",
             "serverRevisionCounter": 11,
-            "lastRetrievedFromServer": 11,
+            "lastRetrievedFromServer": null,
             "isNameObsolete": false
         },
         "ApexClass__KountTokenManager": {
             "memberType": "ApexClass",
             "serverRevisionCounter": 46,
-            "lastRetrievedFromServer": 46,
+            "lastRetrievedFromServer": null,
             "isNameObsolete": false
         },
         "ApexClass__KountTokenManagerTest": {
             "memberType": "ApexClass",
             "serverRevisionCounter": 47,
-            "lastRetrievedFromServer": 47,
+            "lastRetrievedFromServer": null,
             "isNameObsolete": false
         },
         "ApexClass__KountTokenRefresher": {
             "memberType": "ApexClass",
             "serverRevisionCounter": 48,
-            "lastRetrievedFromServer": 48,
+            "lastRetrievedFromServer": null,
+            "isNameObsolete": false
+        },
+        "CustomField__KountAuthSetting__c.ApiKey__c": {
+            "memberType": "CustomField",
+            "serverRevisionCounter": 52,
+            "lastRetrievedFromServer": 52,
+            "isNameObsolete": false
+        },
+        "ExternalCredential__Kount_External": {
+            "memberType": "ExternalCredential",
+            "serverRevisionCounter": 66,
+            "lastRetrievedFromServer": null,
+            "isNameObsolete": false
+        },
+        "NamedCredential__Kount_Auth": {
+            "memberType": "NamedCredential",
+            "serverRevisionCounter": 70,
+            "lastRetrievedFromServer": null,
             "isNameObsolete": false
         }
     }
