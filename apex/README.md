@@ -143,6 +143,49 @@ System.debug(KountJwtAuth.getAccessToken());
 
 ---
 
+## 🔁 Automatic Token Refresh
+
+To refresh your Kount JWT token automatically, you can use a scheduled Apex job.
+
+### 1. Create the Scheduler Class
+
+Ensure you have a class like this:
+
+```apex
+global class KountTokenRefresher implements Schedulable {
+    global void execute(SchedulableContext ctx) {
+        try {
+            String token = KountJwtAuth.getAccessToken();
+            System.debug('🔄 Refreshed token: ' + token);
+        } catch (Exception e) {
+            System.debug('❌ Token refresh failed: ' + e.getMessage());
+        }
+    }
+}
+```
+
+### 2. Schedule the Job via Developer Console
+
+Open **Execute Anonymous Window** in Developer Console and run:
+
+```apex
+String cronExp = '0 0,15,30,45 * * * ?'; // Every 15 minutes
+System.schedule('KountTokenRefresher 15min', cronExp, new KountTokenRefresher());
+```
+
+You can verify the scheduled job by querying:
+
+```apex
+List<CronTrigger> jobs = [
+    SELECT Id, CronJobDetail.Name, NextFireTime 
+    FROM CronTrigger 
+    WHERE CronJobDetail.Name LIKE 'KountTokenRefresher%'
+];
+for (CronTrigger job : jobs) {
+    System.debug('📅 Job: ' + job.CronJobDetail.Name + ' | Next run: ' + job.NextFireTime);
+}
+```
+
 ## ✅ Done!
 
 You're now securely retrieving JWT access tokens from Kount via Salesforce using Named Credentials and External Credentials. 🎉
