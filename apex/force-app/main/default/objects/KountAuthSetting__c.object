@@ -1,19 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
-    <label>Kount Auth Setting</label>
-    <description>Stores Kount JWT tokens and expiration epoch</description>
     <customSettingsType>Hierarchy</customSettingsType>
-    <fields>
-        <fullName>AccessToken__c</fullName>
-        <label>Access Token</label>
-        <type>Text</type>
-        <length>255</length>
-    </fields>
-    <fields>
-        <fullName>ExpirationEpoch__c</fullName>
-        <label>Expiration (Epoch)</label>
-        <type>Number</type>
-        <precision>18</precision>
-        <scale>0</scale>
-    </fields>
+    <description>Stores Kount JWT tokens and expiration epoch</description>
+    <enableFeeds>false</enableFeeds>
+    <label>Kount Auth Setting</label>
+    <visibility>Public</visibility>
 </CustomObject>
