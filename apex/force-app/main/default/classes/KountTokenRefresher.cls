@@ -1,6 +1,5 @@
-public class KountTokenRefresher implements Schedulable {
-
-    public void execute(SchedulableContext context) {
-        KountTokenManager.refreshToken();
+global class KountTokenRefresher implements Schedulable {
+    global void execute(SchedulableContext ctx) {
+        System.enqueueJob(new KountTokenRefresherJob());
     }
 }
