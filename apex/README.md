@@ -179,8 +179,11 @@ global class KountTokenRefresher implements Schedulable {
 Open **Execute Anonymous Window** in Developer Console and run:
 
 ```apex
-String cronExp = '0 0,15,30,45 * * * ?'; // Every 15 minutes
-System.schedule('KountTokenRefresher 15min', cronExp, new KountTokenRefresher());
+// Every 15 minutes using 4 separate jobs
+System.schedule('KountTokenRefresher 00', '0 0 * * * ?', new KountTokenRefresher());
+System.schedule('KountTokenRefresher 15', '0 15 * * * ?', new KountTokenRefresher());
+System.schedule('KountTokenRefresher 30', '0 30 * * * ?', new KountTokenRefresher());
+System.schedule('KountTokenRefresher 45', '0 45 * * * ?', new KountTokenRefresher());
 ```
 
 You can verify the scheduled job by querying:
