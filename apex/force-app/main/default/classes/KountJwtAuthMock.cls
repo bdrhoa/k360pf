@@ -3,7 +3,7 @@ global class KountJwtAuthMock implements HttpCalloutMock {
     global HTTPResponse respond(HTTPRequest req) {
         HttpResponse res = new HttpResponse();
         res.setHeader('Content-Type', 'application/json');
-        res.setBody('{"access_token": "mockedToken", "expires_in": 3600}');
+        res.setBody('{"access_token": "eyJraWQiOiJPdTRzeVUxbHJUZDJpeWJhN0ZTR3c2RlF1WG10cXRtVDVVX2lvSXR5X1Q0IiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULnlJNUFnOU9WRW9sc241dWoxZ3Bjc3hPT2FlNlprU2M4TkU5RXpVamZncTQiLCJpc3MiOiJodHRwczovL2xvZ2luLmtvdW50LmNvbS9vYXV0aDIvYXVzZHBwa3VqekNQUXVJclkzNTciLCJhdWQiOiJrMV9zYW5kYm94MTNfaW50ZWdyYXRpb25fYXBpX2F1dGhfc2VydmVyIiwic3ViIjoiMG9hMWJjNXgxcmJrd3ZlM3kzNTgiLCJpYXQiOjE3NDYzMzE3MDgsImV4cCI6MTc0NjMzMjkwOCwiY2lkIjoiMG9hMWJjNXgxcmJrd3ZlM3kzNTgiLCJzY3AiOlsiazFfaW50ZWdyYXRpb25fYXBpIl0sImVudGl0bGVtZW50cyI6WyJwYXltZW50c19mcmF1ZF9tYW51YWxfcmV2aWV3IiwiYXBfbG9naW4iLCJiYXNlIiwiYXBfbmV3X2FjY291bnRfb3BlbmluZyIsInBheW1lbnRzX2ZyYXVkIl0sIm9yZ19pZCI6ImNzNGljdWhyYWdkODJtY3RldXQwIiwiY2xpZW50X2lkIjoiOTI4NzM3Mzc5Nzk5MDkzIn0.Wy0hCBxhBJADdGp5AuCLlNYP--3lVaOa87WSm3eaiEiLNAlj_sF85CSTB6w-ufIX9hVMWFA6iCsTFXlweAgV-A7aPcO2pBeBGrBCNrfRqMFLFvKJ--sEH0FXuqk26nNVTmPCAEbrOBf6RC0vBh4NPPY8J4TWm-_X3dB9pBYvPxjhkShT0R4bkvrzCcPOwcYpw6KSCUd1TCjXusfTgHSz-93_wxnWTyLs8ouAJtuYl4WhhX33YpHTsk8P6EjenMEYGPfrSPEdZFraEen_WoMTzG6xrN-FhowFA3xzRmc5_aLlbST-ENp5sI9WNurbKGsDhMO5kVGUOYQRgWjghqMDQA", "expires_in": 1200}');
         res.setStatusCode(200);
         return res;
     }
