@@ -44,10 +44,10 @@ public class KountJwtAuth {
     }
 
     private static String getApiKey() {
-        KountAuthSetting__c setting = KountAuthSetting__c.getInstance();
-        if (setting == null || String.isBlank(setting.ApiKey__c)) {
-            throw new CalloutException('Missing KOUNT_API_KEY in custom settings.');
+        KountAuthConfig__c config = [SELECT Id, ApiKey__c FROM KountAuthConfig__c LIMIT 1];
+        if (config == null || String.isBlank(config.ApiKey__c)) {
+            throw new CalloutException('Missing KOUNT_API_KEY in KountAuthConfig__c.');
         }
-        return setting.ApiKey__c;
+        return config.ApiKey__c;
     }
 }
