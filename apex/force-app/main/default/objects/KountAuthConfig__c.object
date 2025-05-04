@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Kount Auth Config</label>
+    <pluralLabel>Kount Auth Configs</pluralLabel>
+    <description>Stores Kount JWT tokens and expiration epoch</description>
+    <visibility>Public</visibility>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <nameField>
+        <type>Text</type>
+        <label>Name</label>
+    </nameField>
+    <fields>
+        <fullName>AccessToken__c</fullName>
+        <label>Access Token</label>
+        <type>LongTextArea</type>
+        <length>131072</length>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>ApiKey__c</fullName>
+        <label>API Key</label>
+        <type>LongTextArea</type>
+        <length>131072</length>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>ExpirationEpoch__c</fullName>
+        <label>Expiration Epoch</label>
+        <type>Number</type>
+        <precision>18</precision>
+        <scale>0</scale>
+    </fields>
+</CustomObject>

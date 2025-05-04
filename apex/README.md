@@ -14,7 +14,7 @@ This guide provides step-by-step instructions for setting up Salesforce to retri
 
 ## ✅ Goal
 
-Allow Apex code to authenticate with Kount using a Named Credential secured via Custom Setting.
+Allow Apex code to authenticate with Kount using a Named Credential secured via Custom Object.
 
 ---
 
@@ -27,44 +27,54 @@ force-app/
         ├── classes/
         │   └── KountJwtAuth.cls
         └── objects/
-            └── KountAuthSetting__c/
-                ├── KountAuthSetting__c.object
+            └── KountAuthConfig__c/
+                ├── KountAuthConfig__c.object
                 └── fields/
-                    └── ApiKey__c.field-meta.xml
+                    ├── ApiKey__c.field-meta.xml
+                    ├── AccessToken__c.field-meta.xml
+                    └── ExpirationEpoch__c.field-meta.xml
 ```
 
 ---
 
 ## 🛠️ Salesforce Setup Steps
 
-### 1. Create Custom Setting to Store the API Key
+### 1. Create Custom Object to Store API Key and Tokens
 
-1. Go to **Setup → Custom Settings → New**.
+1. Go to **Setup → Object Manager → Create → Custom Object**.
 2. Fill in the following:
-   - **Label**: `Kount Auth Setting`
-   - **Object Name**: `KountAuthSetting`
-   - **Setting Type**: `Hierarchy`
-   - **Visibility**: `Public`
+   - **Label**: `Kount Auth Config`
+   - **Plural Label**: `Kount Auth Configs`
+   - **Object Name**: `KountAuthConfig`
+   - **Record Name**: `Name` (Text)
+   - **Allow Reports**, **Allow Activities**: as needed
 3. Click **Save**.
-4. Add a custom field:
-   - **Field Label**: `API Key`
-   - **Field Name**: `ApiKey`
-   - **Type**: `Text`, Length: `255`
-
-#### ⚠️ Example
-
-| Label      | Field Name  | Type |
-|------------|-------------|------|
-| API Key    | ApiKey__c   | Text |
+4. Add custom fields:
+   - **API Key**
+     - **Field Label**: `API Key`
+     - **Field Name**: `ApiKey`
+     - **Data Type**: `Text`, Length: `255`
+   - **Access Token**
+     - **Field Label**: `Access Token`
+     - **Field Name**: `AccessToken`
+     - **Data Type**: `Text Area (Long)`
+   - **Expiration Epoch**
+     - **Field Label**: `Expiration Epoch`
+     - **Field Name**: `ExpirationEpoch`
+     - **Data Type**: `Number`, Length: `18`, Decimal Places: `0`
 
 ---
 
-### 2. Enter API Key in the Custom Setting
+### 2. Enter API Key and Initialize Token Records
 
-1. In **Setup**, search for **Custom Settings**.
-2. Click **Manage** next to `Kount Auth Setting`.
-3. Click **New** to create a default organization-level setting.
-4. Paste your base64-encoded `username:password` string in the **API Key** field.
+1. In **Setup → Object Manager**, find `Kount Auth Config`.
+2. Click **Tab** and create a tab if needed.
+3. Go to the `Kount Auth Configs` tab.
+4. Click **New** to create a record.
+5. Enter a Name (e.g., `Default`).
+6. Paste your base64-encoded `username:password` string in the **API Key** field.
+7. Leave **Access Token** and **Expiration Epoch** blank initially.
+8. Save the record.
 
 ---
 
@@ -128,8 +138,8 @@ System.debug('🔑 Token: ' + token);
         |                        +--> Base URL                |
         |                        +--> Authorization Header    |
         |                                                   |
-        +--> Custom Setting (API Key)                       |
-              KountAuthSetting__c                          |
+        +--> Custom Object (API Key & Token Storage)        |
+              KountAuthConfig__c                            |
 ```
 
 ---
