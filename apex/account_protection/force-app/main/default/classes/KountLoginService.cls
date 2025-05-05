@@ -1,7 +1,7 @@
 public with sharing class KountLoginService {
 
-    private static final String LOGIN_DECISION_URL = 'https://api.kount.com/account-protection/login/v2';
-    private static final String FAILED_ATTEMPT_URL = 'https://api.kount.com/events/failed-attempt';
+    private static final String LOGIN_DECISION_URL = 'https://api-sandbox.kount.com/login/v2';
+    private static final String FAILED_ATTEMPT_URL = 'https://api-sandbox.kount.com/events/failed-attempt';
 
     public class LoginRequest {
         public String inquiryId;
@@ -63,6 +63,10 @@ public with sharing class KountLoginService {
         return http.send(req);
     }
 
+    public static HttpResponse sendLoginRequest(LoginRequest request) {
+       return sendLoginRequest(request, null);
+    }
+
     public class FailedAttemptEvent {
         public String clientId;
         public String sessionId;
@@ -86,6 +90,10 @@ public with sharing class KountLoginService {
 
         Http http = new Http();
         return http.send(req);
+    }
+
+    public static HttpResponse sendFailedLogin(FailedAttemptEvent event) {
+        return sendFailedLogin(event, null);
     }
 } 
 
