@@ -103,6 +103,3 @@ k360/
 │   └── account_protection/     # Login, NAO, ChallengeOutcome logic
 ```
 
----
-
-Let me know if you'd like to scaffold the NAO service class next.
