@@ -2,13 +2,15 @@
   "packageDirectories": [
     {
       "path": "jwt_auth",
+      "default": false
+    },
+    {
+      "path": "payments",
       "default": true
     },
     {
-      "path": "payments"
-    },
-    {
-      "path": "account_protection"
+      "path": "account_protection",
+      "default": false
     }
   ],
   "namespace": "",
