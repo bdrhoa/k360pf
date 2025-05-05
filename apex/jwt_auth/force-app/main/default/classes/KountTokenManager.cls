@@ -1,10 +1,23 @@
 public with sharing class KountTokenManager {
     public static String getToken(KountAuthConfig__c injectedSetting) {
-        KountAuthConfig__c setting = injectedSetting != null ? injectedSetting : [SELECT Id, Name, AccessToken__c, ExpirationEpoch__c, ApiKey__c FROM KountAuthConfig__c WHERE Name = 'Default' LIMIT 1];
+        KountAuthConfig__c setting;
+        if (injectedSetting != null) {
+            setting = injectedSetting;
+        } else {
+            List<KountAuthConfig__c> configs = [SELECT Id, Name, AccessToken__c, ExpirationEpoch__c, ApiKey__c FROM KountAuthConfig__c WHERE Name = 'Default' LIMIT 1];
+            if (configs.isEmpty()) {
+                throw new AuraHandledException('No KountAuthConfig__c record found with Name = Default');
+            }
+            setting = configs[0];
+        }
         if (setting == null || isExpired(setting)) {
             refreshToken(setting);
             if (injectedSetting == null) {
-                setting = [SELECT Id, Name, AccessToken__c, ExpirationEpoch__c, ApiKey__c FROM KountAuthConfig__c WHERE Name = 'Default' LIMIT 1];
+                List<KountAuthConfig__c> configs = [SELECT Id, Name, AccessToken__c, ExpirationEpoch__c, ApiKey__c FROM KountAuthConfig__c WHERE Name = 'Default' LIMIT 1];
+                if (configs.isEmpty()) {
+                    throw new AuraHandledException('No KountAuthConfig__c record found with Name = Default');
+                }
+                setting = configs[0];
             }
             // else: keep using the injected setting, which was updated in refreshToken()
         }
@@ -49,11 +62,16 @@ public with sharing class KountTokenManager {
             throw new AuraHandledException('Invalid expiration epoch from JWT');
         }
 
-        if (expirationEpoch <= 0) {
-            throw new AuraHandledException('Invalid expiration epoch from JWT');
+        KountAuthConfig__c setting;
+        if (injectedSetting != null) {
+            setting = injectedSetting;
+        } else {
+            List<KountAuthConfig__c> configs = [SELECT Id, Name, AccessToken__c, ExpirationEpoch__c, ApiKey__c FROM KountAuthConfig__c WHERE Name = 'Default' LIMIT 1];
+            if (configs.isEmpty()) {
+                throw new AuraHandledException('No KountAuthConfig__c record found with Name = Default');
+            }
+            setting = configs[0];
         }
-
-        KountAuthConfig__c setting = injectedSetting != null ? injectedSetting : [SELECT Id, Name, AccessToken__c, ExpirationEpoch__c, ApiKey__c FROM KountAuthConfig__c WHERE Name = 'Default' LIMIT 1];
         if (setting == null) {
             setting = new KountAuthConfig__c(Name = 'Default');
         }
