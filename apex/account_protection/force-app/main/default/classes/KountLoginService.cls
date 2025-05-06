@@ -60,11 +60,65 @@ public with sharing class KountLoginService {
         req.setBody(JSON.serialize(request));
 
         Http http = new Http();
-        return http.send(req);
+        HttpResponse res = http.send(req);
+        System.debug('Kount Login Response Status: ' + res.getStatus());
+        System.debug('Kount Login Response Body: ' + res.getBody());
+        return res;
     }
 
     public static HttpResponse sendLoginRequest(LoginRequest request) {
        return sendLoginRequest(request, null);
+    }
+
+
+    @future(callout=true)
+    public static void sendAsyncLoginRequest(
+        String inquiryId,
+        String channel,
+        String deviceSessionId,
+        String userIp,
+        String loginUrl,
+        String firstName,
+        String lastName,
+        String preferredName,
+        String emailAddress,
+        String phoneNumber,
+        String accountId,
+        String accountType,
+        String creationDateTime,
+        String username,
+        String userPassword,
+        Boolean accountIsActive,
+        String mfaTemplateName
+    ) {
+        LoginRequest req = new LoginRequest();
+        req.inquiryId = inquiryId;
+        req.channel = channel;
+        req.deviceSessionId = deviceSessionId;
+        req.userIp = userIp;
+        req.loginUrl = loginUrl;
+
+        req.person = new Person();
+        req.person.name = new Name();
+        req.person.name.first = firstName;
+        req.person.name.last = lastName;
+        req.person.name.preferred = preferredName;
+        req.person.emailAddress = emailAddress;
+        req.person.phoneNumber = phoneNumber;
+        req.person.addresses = new List<Address>{ new Address() };
+
+        req.account = new Account();
+        req.account.id = accountId;
+        req.account.type = accountType;
+        req.account.creationDateTime = creationDateTime;
+        req.account.username = username;
+        req.account.userPassword = userPassword;
+        req.account.accountIsActive = accountIsActive;
+
+        req.strategy = new Strategy();
+        req.strategy.mfaTemplateName = mfaTemplateName;
+
+        sendLoginRequest(req);
     }
 
     public class FailedAttemptEvent {
@@ -89,12 +143,27 @@ public with sharing class KountLoginService {
         req.setBody(JSON.serialize(payload));
 
         Http http = new Http();
-        return http.send(req);
+        HttpResponse res = http.send(req);
+        System.debug('Kount Failed Login Response Status: ' + res.getStatus());
+        System.debug('Kount Failed Login Response Body: ' + res.getBody());
+        return res;
     }
 
     public static HttpResponse sendFailedLogin(FailedAttemptEvent event) {
         return sendFailedLogin(event, null);
     }
+
+    @future(callout=true)
+    public static void sendAsyncFailedLogin(String clientId, String sessionId, String userId, String username) {
+        FailedAttemptEvent event = new FailedAttemptEvent();
+        event.clientId = clientId;
+        event.sessionId = sessionId;
+        event.userId = userId;
+        event.username = username;
+        sendFailedLogin(event);
+    }
+
+
 } 
 
 // ChallengeOutcome support would be in a shared service like:
