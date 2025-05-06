@@ -1,5 +1,5 @@
 public with sharing class KountApiService {
-    private static final String BASE_URL = 'https://api.kount.com';
+    private static final String BASE_URL = 'https://api-sandbox.kount.com';
 
     public static HttpResponse callLoginV2(Map<String, Object> payload) {
         return callKountApi('/login/v2', payload);
