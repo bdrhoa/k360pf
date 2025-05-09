@@ -63,15 +63,79 @@ private class KountLoginServiceTest {
         Test.startTest();
 
         KountLoginService.FailedAttemptEvent event = new KountLoginService.FailedAttemptEvent();
-        event.clientId = '900900';
-        event.sessionId = 'sess123';
-        event.userId = 'user123';
-        event.username = 'jane_doe';
+        event.inquiryId = 'inq123';
+        event.channel = 'WEB';
+        event.deviceSessionId = 'dev123';
+        event.userIp = '192.168.1.1';
+        event.loginUrl = 'https://example.com/login';
+        
+        // Set up person
+        event.person = new KountLoginService.Person();
+        event.person.emailAddress = 'test@example.com';
+        event.person.phoneNumber = '+15555550123';
+        
+        // Set up account
+        event.account = new KountLoginService.Account();
+        event.account.id = 'user123';
+        event.account.username = 'jane_doe';
+        event.account.type = 'STANDARD';
+        event.account.creationDateTime = '2024-01-01T12:12:12.000Z';
+        event.account.userPassword = 'hashedpassword';
+        event.account.accountIsActive = true;
 
         Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator());
 
         HttpResponse response = KountLoginService.sendFailedLogin(event, config);
         System.assertEquals(200, response.getStatusCode());
+
+        Test.stopTest();
+    }
+
+    @isTest
+    static void testSendAsyncFailedLogin() {
+        // Set up the auth config first
+        KountAuthConfig__c config = new KountAuthConfig__c(
+            Name = 'Default',
+            AccessToken__c = 'dummy.jwt.token',
+            ExpirationEpoch__c = 9999999999L
+        );
+        insert config;
+
+        Test.startTest();
+
+        // Set up test data
+        String inquiryId = 'inq_' + String.valueOf(Datetime.now().getTime());
+        String channel = 'WEB';
+        String deviceSessionId = 'dev_' + String.valueOf(Datetime.now().getTime());
+        String userIp = '192.168.1.1';
+        String loginUrl = 'https://example.com/login';
+        String emailAddress = 'test@example.com';
+        String phoneNumber = '+15555550123';
+        String userId = 'user123';
+        String username = 'jane_doe';
+        String accountType = 'STANDARD';
+        String creationDateTime = Datetime.now().format('yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'');
+        String userPassword = 'hashedpassword';
+        Boolean accountIsActive = true;
+
+        Test.setMock(HttpCalloutMock.class, new MockHttpResponseGenerator());
+
+        // Call the async method
+        KountLoginService.sendAsyncFailedLogin(
+            inquiryId,
+            channel,
+            deviceSessionId,
+            userIp,
+            loginUrl,
+            emailAddress,
+            phoneNumber,
+            userId,
+            username,
+            accountType,
+            creationDateTime,
+            userPassword,
+            accountIsActive
+        );
 
         Test.stopTest();
     }

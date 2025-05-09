@@ -71,61 +71,14 @@ public with sharing class KountLoginService {
     }
 
 
-    @future(callout=true)
-    public static void sendAsyncLoginRequest(
-        String inquiryId,
-        String channel,
-        String deviceSessionId,
-        String userIp,
-        String loginUrl,
-        String firstName,
-        String lastName,
-        String preferredName,
-        String emailAddress,
-        String phoneNumber,
-        String accountId,
-        String accountType,
-        String creationDateTime,
-        String username,
-        String userPassword,
-        Boolean accountIsActive,
-        String mfaTemplateName
-    ) {
-        LoginRequest req = new LoginRequest();
-        req.inquiryId = inquiryId;
-        req.channel = channel;
-        req.deviceSessionId = deviceSessionId;
-        req.userIp = userIp;
-        req.loginUrl = loginUrl;
-
-        req.person = new Person();
-        req.person.name = new Name();
-        req.person.name.first = firstName;
-        req.person.name.last = lastName;
-        req.person.name.preferred = preferredName;
-        req.person.emailAddress = emailAddress;
-        req.person.phoneNumber = phoneNumber;
-        req.person.addresses = new List<Address>{ new Address() };
-
-        req.account = new Account();
-        req.account.id = accountId;
-        req.account.type = accountType;
-        req.account.creationDateTime = creationDateTime;
-        req.account.username = username;
-        req.account.userPassword = userPassword;
-        req.account.accountIsActive = accountIsActive;
-
-        req.strategy = new Strategy();
-        req.strategy.mfaTemplateName = mfaTemplateName;
-
-        sendLoginRequest(req);
-    }
-
     public class FailedAttemptEvent {
-        public String clientId;
-        public String sessionId;
-        public String userId;
-        public String username;
+        public String inquiryId;
+        public String channel;
+        public String deviceSessionId;
+        public String userIp;
+        public String loginUrl;
+        public Person person;
+        public Account account;
     }
 
     public static HttpResponse sendFailedLogin(FailedAttemptEvent event, KountAuthConfig__c config) {
@@ -140,7 +93,27 @@ public with sharing class KountLoginService {
             'failedAttempt' => event
         };
 
-        req.setBody(JSON.serialize(payload));
+        String requestBody = JSON.serialize(payload);
+        req.setBody(requestBody);
+        
+        // Add detailed logging
+        System.debug('Kount Failed Login Request Details:');
+        System.debug('Endpoint: ' + FAILED_ATTEMPT_URL);
+        System.debug('Request Body: ' + requestBody);
+        System.debug('Event Details:');
+        System.debug('  inquiryId: ' + event.inquiryId);
+        System.debug('  channel: ' + event.channel);
+        System.debug('  deviceSessionId: ' + event.deviceSessionId);
+        System.debug('  userIp: ' + event.userIp);
+        System.debug('  loginUrl: ' + event.loginUrl);
+        System.debug('  emailAddress: ' + event.person.emailAddress);
+        System.debug('  phoneNumber: ' + event.person.phoneNumber);
+        System.debug('  accountId: ' + event.account.id);
+        System.debug('  accountType: ' + event.account.type);
+        System.debug('  accountCreationDateTime: ' + event.account.creationDateTime);
+        System.debug('  accountUsername: ' + event.account.username);
+        System.debug('  accountUserPassword: ' + event.account.userPassword);
+        System.debug('  accountIsActive: ' + event.account.accountIsActive);
 
         Http http = new Http();
         HttpResponse res = http.send(req);
@@ -154,17 +127,51 @@ public with sharing class KountLoginService {
     }
 
     @future(callout=true)
-    public static void sendAsyncFailedLogin(String clientId, String sessionId, String userId, String username) {
+    public static void sendAsyncFailedLogin(
+        String inquiryId,
+        String channel,
+        String deviceSessionId,
+        String userIp,
+        String loginUrl,
+        String emailAddress,
+        String phoneNumber,
+        String userId,
+        String username,
+        String accountType,
+        String creationDateTime,
+        String userPassword,
+        Boolean accountIsActive
+    ) {
         FailedAttemptEvent event = new FailedAttemptEvent();
-        event.clientId = clientId;
-        event.sessionId = sessionId;
-        event.userId = userId;
-        event.username = username;
+        event.inquiryId = inquiryId;
+        event.channel = channel;
+        event.deviceSessionId = deviceSessionId;
+        event.userIp = userIp;
+        event.loginUrl = loginUrl;
+        
+        // Set up person
+        event.person = new Person();
+        event.person.emailAddress = emailAddress;
+        event.person.phoneNumber = phoneNumber;
+        
+        // Set up account
+        event.account = new Account();
+        event.account.id = userId;
+        event.account.username = username;
+        event.account.type = accountType;
+        event.account.creationDateTime = creationDateTime;
+        event.account.userPassword = userPassword;
+        event.account.accountIsActive = accountIsActive;
+        
         sendFailedLogin(event);
     }
 
+    public static void ensureTokenReady() {
+        KountTokenManager.getToken();
+    }
 
 } 
 
 // ChallengeOutcome support would be in a shared service like:
 // KountChallengeOutcomeService.sendChallengeOutcome(...)
+
