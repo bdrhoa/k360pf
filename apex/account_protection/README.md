@@ -74,6 +74,8 @@ req.account.accountIsActive = true;
 req.strategy = new KountLoginService.Strategy();
 req.strategy.mfaTemplateName = 'default_template';
 
+// Ensure token is ready before sending the request
+KountLoginService.ensureTokenReady();
 HttpResponse res = KountLoginService.sendLoginRequest(req);
 System.debug('Response: ' + res.getBody());
 ```
