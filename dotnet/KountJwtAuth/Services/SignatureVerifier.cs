@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace KountJwtAuth.Services
 {
-    public class SignatureVerifier
+    public class SignatureVerifier : ISignatureVerifier
     {
         private readonly ILogger<SignatureVerifier> _logger;
         private readonly TimeSpan _gracePeriod;

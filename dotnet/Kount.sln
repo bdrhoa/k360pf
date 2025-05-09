@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KountJwtAuth.Tests", "Kount
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientDemoApp", "ClientDemoApp\ClientDemoApp.csproj", "{9978EA92-AEFF-4E5A-B886-3A056C88FC38}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KountWebhook", "KountWebhook\KountWebhook.csproj", "{83B9FDA3-F83C-47AC-990B-A200F4CA45A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KountWebhook.Tests", "KountWebhook.Tests\KountWebhook.Tests.csproj", "{36C5F78A-7C58-497F-A0DD-7C620D3D28E6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +34,13 @@ Global
 		{9978EA92-AEFF-4E5A-B886-3A056C88FC38}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9978EA92-AEFF-4E5A-B886-3A056C88FC38}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9978EA92-AEFF-4E5A-B886-3A056C88FC38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83B9FDA3-F83C-47AC-990B-A200F4CA45A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83B9FDA3-F83C-47AC-990B-A200F4CA45A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83B9FDA3-F83C-47AC-990B-A200F4CA45A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83B9FDA3-F83C-47AC-990B-A200F4CA45A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36C5F78A-7C58-497F-A0DD-7C620D3D28E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36C5F78A-7C58-497F-A0DD-7C620D3D28E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36C5F78A-7C58-497F-A0DD-7C620D3D28E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36C5F78A-7C58-497F-A0DD-7C620D3D28E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
