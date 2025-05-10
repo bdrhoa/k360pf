@@ -1,12 +1,12 @@
 # Use .NET 7.0 SDK for build
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
-WORKDIR /src
+WORKDIR /k360
 
 # Copy source code
-COPY . .
+COPY . /k360
 
 # Restore and publish the app
-WORKDIR /src/k360/dotnet/KountWebhook
+WORKDIR /k360/dotnet/KountWebhook
 RUN dotnet restore KountWebhook.csproj
 RUN dotnet publish KountWebhook.csproj -c Release -o /app
 

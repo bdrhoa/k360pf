@@ -1,0 +1,23 @@
+# Ignore git metadata
+.git
+.gitignore
+
+# Ignore Dockerfile and dockerignore itself (not required but sometimes used for cleanliness)
+Dockerfile
+.dockerignore
+
+# Build output
+**/bin/
+**/obj/
+
+# User-specific files
+*.user
+*.suo
+*.sln.docstates
+
+# VSCode settings
+.vscode/
+
+# OS files
+*.DS_Store
+Thumbs.db
