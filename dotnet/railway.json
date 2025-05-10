@@ -1,0 +1,10 @@
+{
+    "build": {
+      "builder": "NIXPACKS",
+      "buildCommand": "dotnet publish -c Release -o out",
+      "startCommand": "dotnet out/KountWebhook.dll"
+    },
+    "deploy": {
+      "workingDirectory": "k360/dotnet/KountWebhook"
+    }
+  }
