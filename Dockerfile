@@ -7,8 +7,8 @@ COPY . .
 
 # Restore and publish the app
 WORKDIR /src/k360/dotnet/KountWebhook
-RUN dotnet restore
-RUN dotnet publish -c Release -o /app
+RUN dotnet restore KountWebhook.csproj
+RUN dotnet publish KountWebhook.csproj -c Release -o /app
 
 # Use runtime-only image
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
