@@ -1,5 +1,5 @@
 # Use .NET 7.0 SDK for build
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0.100 AS build
 WORKDIR /k360
 
 # Copy source code
