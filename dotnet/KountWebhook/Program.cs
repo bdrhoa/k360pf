@@ -7,7 +7,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-builder.Services.AddSingleton<KountJwtAuth.Services.SignatureVerifier>();
+builder.Services.AddScoped<KountJwtAuth.Services.ISignatureVerifier, KountJwtAuth.Services.SignatureVerifier>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
