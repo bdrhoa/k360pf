@@ -1,5 +1,5 @@
 # Use .NET 7.0 SDK for build
-FROM mcr.microsoft.com/dotnet/sdk:7.0.100 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0.408 AS build
 WORKDIR /k360
 
 # Copy source code
@@ -11,7 +11,7 @@ RUN dotnet restore KountWebhook.csproj
 RUN dotnet publish KountWebhook.csproj -c Release -o /app
 
 # Use runtime-only image
-FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app .
 
