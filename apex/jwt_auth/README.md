@@ -68,7 +68,13 @@ force-app/
 ### 2. Enter API Key and Initialize Token Records
 
 1. In **Setup → Object Manager**, find `Kount Auth Config`.
-2. Click **Tab** and create a tab if needed.
+2. If you do not see a tab for `Kount Auth Configs` in the App Launcher:
+   - Go to **Setup → Tabs**
+   - Click **New** under Custom Object Tabs
+   - Select `KountAuthConfig__c` as the object
+   - Choose a Tab Style and click **Next**
+   - Assign it to the appropriate profiles or apps and click **Save**
+   - You should now see `Kount Auth Configs` available in the App Launcher
 3. Go to the `Kount Auth Configs` tab.
 4. Click **New** to create a record.
 5. Enter a Name (e.g., `Default`).
