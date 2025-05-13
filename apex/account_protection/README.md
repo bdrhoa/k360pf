@@ -36,10 +36,38 @@ This Apex app integrates with Kount's Account Protection service to submit Login
 ## 🔐 Login Decision Workflow
 
 ### 🔁 Flow
+A Login Decision Request should only be sent after the customer has **successfully authenticated** on the merchant’s site. Kount then determines whether to ALLOW, CHALLENGE, or BLOCK the login based on risk signals.
 1. Customer attempts login.
 2. Merchant sends Kount a Login Decision Request via `KountLoginService.sendLoginRequest()`.
 3. Kount returns `ALLOW`, `CHALLENGE`, or `BLOCK`.
 4. If `CHALLENGE` and client uses custom MFA, merchant must call ChallengeOutcome API.
+
+### ❌ Failed Login Event (Pre-Authentication)
+
+Use this event to notify Kount when a customer fails to authenticate — for example, when the provided username and password do **not** match. This can help inform future risk decisions.
+
+#### Example
+Open **Developer Console > Execute Anonymous**, and run:
+
+```apex
+KountEventService.sendAsyncFailedLogin(
+    'inquiry-123',
+    'WEB',
+    'device-session-abc',
+    '192.168.1.1',
+    'https://example.com/login',
+    'test@example.com',
+    '1234567890',
+    'user-001',
+    'testuser',
+    'registered',
+    '2023-01-01T12:00:00Z',
+    'SuperSecurePassword123!',
+    true
+);
+```
+
+> This method is asynchronous and sends a Failed Login event to Kount. Use it **before** any Login Request when a user fails to sign in due to incorrect credentials.
 
 ### 🧪 Live Testing in Developer Console
 Open **Developer Console > Execute Anonymous**, and run:
