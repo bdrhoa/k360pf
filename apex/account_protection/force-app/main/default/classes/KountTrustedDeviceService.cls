@@ -58,4 +58,21 @@ public with sharing class KountTrustedDeviceService {
 
         return (DeleteResponse) JSON.deserialize(res.getBody(), DeleteResponse.class);
     }
+    // Async method to create trusted device
+    @future(callout=true)
+    public static void createTrustedDeviceAsync(String clientId, String sessionId, String userId, String trustState, String friendlyName) {
+        CreateRequest input = new CreateRequest();
+        input.clientId = clientId;
+        input.sessionId = sessionId;
+        input.userId = userId;
+        input.trustState = trustState;
+        input.friendlyName = friendlyName;
+        createTrustedDevice(input);
+    }
+
+    // Async method to delete trusted device
+    @future(callout=true)
+    public static void deleteTrustedDeviceAsync(String sessionId, String userId, String clientId) {
+        deleteTrustedDevice(sessionId, userId, clientId);
+    }
 }
