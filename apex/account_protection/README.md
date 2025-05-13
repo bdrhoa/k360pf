@@ -13,7 +13,7 @@ This Apex app integrates with Kount's Account Protection service to submit Login
 2. **Create Remote Site Setting**
    Go to **Setup > Remote Site Settings** and create:
    - **Name**: `KountAPI`
-   - **URL**: `https://api.kount.com`
+   - **URL**: `https://api-sandbox.kount.com (Test) | https://api.kount.com (Prod)` 
    - **Active**: ✅
 
 3. **Create Config Record**
