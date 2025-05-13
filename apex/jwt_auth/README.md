@@ -152,9 +152,44 @@ System.debug('🔑 Token: ' + token);
 
 ## 🧪 Testing Locally in Salesforce
 
-- Use **Developer Console → Execute Anonymous Window**:
+- Use **Developer Console → Execute Anonymous Window** to test token retrieval.
+
+### 🔹 Option A: Test with an Injected Config Record
+
+This example creates a temporary config record and passes it to the `getToken()` method.
+
 ```apex
-System.debug(KountJwtAuth.getAccessToken());
+KountAuthConfig__c testConfig = new KountAuthConfig__c(
+    Name = 'InjectedTest',
+    AccessToken__c = 'dummy.token.value',
+    ExpirationEpoch__c = DateTime.now().getTime() / 1000 + 3600,
+    ApiKey__c = 'testApiKey'
+);
+insert testConfig;
+
+String token = KountTokenManager.getToken(testConfig);
+System.debug('Returned token: ' + token);
+```
+
+### 🔹 Option B: Test with Default Record (No Argument)
+
+This assumes a config record named `'Default'` already exists in your org.
+
+```apex
+String token = KountTokenManager.getToken();
+System.debug('Returned token: ' + token);
+```
+
+If needed, create the default record first:
+
+```apex
+KountAuthConfig__c config = new KountAuthConfig__c(
+    Name = 'Default',
+    AccessToken__c = 'another.dummy.token',
+    ExpirationEpoch__c = DateTime.now().getTime() / 1000 + 3600,
+    ApiKey__c = 'defaultApiKey'
+);
+insert config;
 ```
 
 ---
