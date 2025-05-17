@@ -1,4 +1,4 @@
-# Use .NET 7.0 SDK for build
+# Use .NET 8.0 SDK for build
 FROM mcr.microsoft.com/dotnet/sdk:8.0.408 AS build
 WORKDIR /k360
 
