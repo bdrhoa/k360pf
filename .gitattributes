@@ -1,0 +1,139 @@
+# ========================================
+# Common defaults
+# ========================================
+* text=auto
+
+# Binary files
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.ico binary
+*.zip binary
+*.jar binary
+*.class binary
+*.war binary
+*.ear binary
+*.o binary
+*.a binary
+*.dmp binary
+*.pyo binary
+*.pyc binary
+*.par binary
+
+# Logs and dumps
+*.log text
+
+# ========================================
+# C# / .NET
+# ========================================
+*.cs     text diff=csharp
+*.csproj text
+*.sln    text
+*.config text
+*.resx   text
+*.targets text
+
+# ========================================
+# Python
+# ========================================
+*.py     text
+__pycache__/ linguist-vendored
+
+# ========================================
+# TypeScript / JavaScript
+# ========================================
+*.ts     text
+*.tsx    text
+*.js     text
+*.jsx    text
+*.json   text
+*.map    text
+
+# ========================================
+# Go
+# ========================================
+*.go     text
+*.mod    text
+*.sum    text
+vendor/  linguist-vendored
+
+# ========================================
+# Java
+# ========================================
+*.java   text
+*.gradle text
+*.xml    text
+*.properties text
+*.jar    binary
+*.war    binary
+*.class  binary
+*.iml    text
+
+# ========================================
+# PHP
+# ========================================
+*.php    text
+*.phar   binary
+
+# ========================================
+# Ruby / Rails
+# ========================================
+*.rb     text
+*.erb    text
+*.rake   text
+*.gemspec text
+*.gem    binary
+
+# ========================================
+# Apex / Salesforce
+# ========================================
+*.cls        text
+*.trigger    text
+*.page       text
+*.component  text
+*.resource   binary
+*.xml        text
+*.object     text
+*.field      text
+*.permissionset text
+*.profile    text
+*.labels     text
+*.xsd        text
+*.wsdl       text
+src/         linguist-vendored
+force-app/   linguist-vendored
+
+# ========================================
+# HTML/CSS
+# ========================================
+*.html   text
+*.css    text
+*.scss   text
+*.sass   text
+
+# ========================================
+# Other (docs, metadata, config)
+# ========================================
+*.md     text
+*.txt    text
+*.csv    text
+*.yaml   text
+*.yml    text
+*.toml   text
+*.ini    text
+*.env    text
+
+# ========================================
+# GitHub Linguist overrides
+# ========================================
+docs/ linguist-documentation
+tests/ linguist-vendored
+.vscode/ linguist-vendored
+*.snap linguist-generated
+*.min.js linguist-generated
+*.min.css linguist-generated
