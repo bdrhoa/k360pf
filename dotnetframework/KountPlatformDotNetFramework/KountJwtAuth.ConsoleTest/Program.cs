@@ -2,21 +2,35 @@
 using System.Net.Http;
 using KountJwtAuth;
 using System.Threading.Tasks;
+using System.Threading;
 
 class Program
 {
-    static async Task Main(string[] args)    {
+    static async Task Main(string[] args)
+    {
         try
         {
-            //Console.WriteLine("Client ID: " + Environment.GetEnvironmentVariable("KOUNT_CLIENT_ID"));
-            //Console.WriteLine("API Key: " + Environment.GetEnvironmentVariable("KOUNT_API_KEY"));
-
             var httpClient = new HttpClient();
             var tokenService = new TokenService(httpClient);
-            var token = await tokenService.GetValidTokenAsync();
+            string lastToken = string.Empty;
 
-            Console.WriteLine("JWT:");
-            Console.WriteLine(token);
+            while (true)
+            {
+                var token = await tokenService.GetValidTokenAsync();
+
+                if (token != lastToken)
+                {
+                    Console.WriteLine($"{DateTime.UtcNow}: New JWT:");
+                    Console.WriteLine(token);
+
+                    var expiration = TokenManager.Instance.GetExpiration();
+                    Console.WriteLine($"Token expires at UTC: {expiration}");
+
+                    lastToken = token;
+                }
+
+                Thread.Sleep(TimeSpan.FromSeconds(30));
+            }
         }
         catch (Exception ex)
         {
