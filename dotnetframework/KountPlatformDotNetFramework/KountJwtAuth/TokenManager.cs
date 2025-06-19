@@ -22,6 +22,8 @@ namespace KountJwtAuth
 
         public string GetAccessToken() => _accessToken;
 
+        public DateTime GetExpiration() => _expiration == default ? DateTime.UtcNow : _expiration;
+
         public void SetAccessToken(string token, DateTime expiration)
         {
             _accessToken = token;
@@ -42,7 +44,7 @@ namespace KountJwtAuth
         private readonly string _apiKey;
         private readonly TimeSpan _refreshBuffer = TimeSpan.FromMinutes(2);
         private Timer _autoRefreshTimer = null;
-        
+
         public Timer AutoRefreshTimer { get => _autoRefreshTimer; set => _autoRefreshTimer = value; }
 
         public TokenService(HttpClient httpClient)
