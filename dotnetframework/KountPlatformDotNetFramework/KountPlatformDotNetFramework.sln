@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KountJwtAuth.ConsoleTest", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KountJwtAuth.Tests", "KountJwtAuth.Tests\KountJwtAuth.Tests.csproj", "{97941AEB-C325-48B3-BE75-ACBAC5FFBDC3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KountWebhookSignatureVerifier", "KountWebhookSignatureVerifier\KountWebhookSignatureVerifier.csproj", "{BE925AEB-53CA-47AE-9635-DC4CD932B3B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KountWebhookSignatureVerifier.Tests", "KountWebhookSignatureVerifier.Tests\KountWebhookSignatureVerifier.Tests.csproj", "{50837872-A122-43FC-8033-D84EB1881A9E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{97941AEB-C325-48B3-BE75-ACBAC5FFBDC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97941AEB-C325-48B3-BE75-ACBAC5FFBDC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97941AEB-C325-48B3-BE75-ACBAC5FFBDC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE925AEB-53CA-47AE-9635-DC4CD932B3B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE925AEB-53CA-47AE-9635-DC4CD932B3B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE925AEB-53CA-47AE-9635-DC4CD932B3B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE925AEB-53CA-47AE-9635-DC4CD932B3B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50837872-A122-43FC-8033-D84EB1881A9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50837872-A122-43FC-8033-D84EB1881A9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50837872-A122-43FC-8033-D84EB1881A9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50837872-A122-43FC-8033-D84EB1881A9E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
