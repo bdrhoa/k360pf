@@ -42,6 +42,10 @@ namespace KountWebhook.Controllers
             using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
                 body = await reader.ReadToEndAsync();
 
+            _logger.LogInformation("Raw request body: {Body}", body);
+            _logger.LogInformation("X-Event-Timestamp: {Timestamp}", timestampHeader);
+            _logger.LogInformation("X-Event-Signature: {Signature}", signatureHeader);
+
             if (string.IsNullOrWhiteSpace(body))
                 return StatusCode(500, "Empty request body");
 
@@ -54,6 +58,10 @@ namespace KountWebhook.Controllers
                 }
 
                 var payloadBytes = Encoding.UTF8.GetBytes(body);
+                var digest = Encoding.UTF8.GetBytes(timestampHeader).Concat(payloadBytes).ToArray();
+                var digestBase64 = Convert.ToBase64String(digest);
+                _logger.LogInformation("Digest base64 for test reconstruction: {Digest}", digestBase64);
+
                 _signatureVerifier.VerifySignature(signatureHeader!, timestampHeader!, payloadBytes);
             }
             catch (ArgumentException ex)
