@@ -1,0 +1,16 @@
+server:
+  port: ${PORT:8080}
+
+kount360:
+  auth-token-url: ${K360_AUTH_TOKEN_URL:https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token}
+  api-base-url: ${K360_API_BASE_URL:https://api-sandbox.kount.com}
+  client-id: ${K360_CLIENT_ID:}
+  api-key: ${K360_API_KEY:}
+  merchant-id: ${K360_MERCHANT_ID:}
+  channel: ${K360_CHANNEL:default}
+
+  signature-header: ${K360_SIGNATURE_HEADER:X-Kount-Signature}
+  key-id-header: ${K360_KEY_ID_HEADER:X-Kount-Key-Id}
+  public-key-pem: ${K360_PUBLIC_KEY_PEM:}
+  public-key-url: ${K360_PUBLIC_KEY_URL:}
+  public-key-refresh-minutes: ${K360_PUBLIC_KEY_REFRESH_MINUTES:60}
