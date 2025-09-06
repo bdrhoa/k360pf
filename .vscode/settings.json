@@ -1,3 +1,6 @@
 {
-  "python.analysis.extraPaths": ["python/jwt_auth/src"]
+  "python.analysis.extraPaths": [
+    "python/jwt_auth/src"
+  ],
+  "java.compile.nullAnalysis.mode": "automatic"
 }
