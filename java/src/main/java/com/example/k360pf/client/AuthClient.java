@@ -20,9 +20,10 @@ public class AuthClient {
     private final AtomicReference<String> cachedToken = new AtomicReference<>(null);
     private volatile Instant tokenExpiry = Instant.EPOCH;
 
-    public AuthClient(Kount360Properties props) {
+    // 🔁 Inject WebClient.Builder so we can stub it in tests
+    public AuthClient(Kount360Properties props, WebClient.Builder builder) {
         this.props = props;
-        this.http = WebClient.builder().build();
+        this.http = builder.build();
     }
 
     public synchronized String getBearerToken() {
