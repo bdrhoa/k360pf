@@ -36,6 +36,7 @@ return [
     ],
     'kount' => [
         'api_key' => env('KOUNT_API_KEY'),
+        'public_key' => env('KOUNT_PUBLIC_KEY'),
     ],
 
 ];
