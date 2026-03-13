@@ -411,3 +411,22 @@ Debug*/
 Release*/
 # NuGet packages
 packages/
+
+# Laravel PHP app
+/php/k360-api-example/.env
+/php/k360-api-example/.env.backup
+/php/k360-api-example/.env.production
+/php/k360-api-example/.phpunit.result.cache
+/php/k360-api-example/bootstrap/cache/*.php
+!/php/k360-api-example/bootstrap/cache/.gitignore
+/php/k360-api-example/public/build/
+/php/k360-api-example/public/hot
+/php/k360-api-example/storage/*.key
+/php/k360-api-example/storage/app/private/
+/php/k360-api-example/storage/app/public/
+/php/k360-api-example/storage/framework/cache/data/
+/php/k360-api-example/storage/framework/sessions/
+/php/k360-api-example/storage/framework/testing/
+/php/k360-api-example/storage/framework/views/
+/php/k360-api-example/storage/logs/
+/php/k360-api-example/vendor/
