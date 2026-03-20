@@ -71,4 +71,32 @@ class AuthClientTest {
         assertSame(token1, token2, "Token should be cached and reused");
         assertEquals(1, callCount.get(), "Auth endpoint should be called only once");
     }
+    @Test
+    void liveAuthCall_createsRealJwt() {
+        //String authUrl = System.getenv("K360_AUTH_TOKEN_URL");
+        String authUrl = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token";
+        String clientId = System.getenv("KOUNT_CLIENT_ID");
+        String apiKey  = System.getenv("KOUNT_API_KEY");
+
+        org.junit.jupiter.api.Assumptions.assumeTrue(clientId != null && !clientId.isBlank(),
+                "KOUNT_CLIENT_ID not set; skipping live auth test");
+        org.junit.jupiter.api.Assumptions.assumeTrue(apiKey != null && !apiKey.isBlank(),
+                "KOUNT_API_KEY not set; skipping live auth test");
+
+        Kount360Properties props = new Kount360Properties();
+        props.setAuthTokenUrl(authUrl);
+        props.setClientId(clientId);
+        props.setApiKey(apiKey);
+
+        WebClient.Builder builder = WebClient.builder();
+        AuthClient authClient = new AuthClient(props, builder);
+
+        String token = authClient.getBearerToken();
+        org.junit.jupiter.api.Assertions.assertNotNull(token, "Token should not be null");
+        org.junit.jupiter.api.Assertions.assertFalse(token.isBlank(), "Token should not be blank");
+
+        String[] parts = token.split("\\.");
+        org.junit.jupiter.api.Assertions.assertEquals(3, parts.length, "Expected a JWT with three dot-separated parts");
+        System.out.println("Received JWT: " + token);
+    }
 }

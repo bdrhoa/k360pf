@@ -1,10 +1,10 @@
 package com.example.k360pf.client;
 
 import com.example.k360pf.config.Kount360Properties;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -20,25 +20,25 @@ public class AuthClient {
     private final AtomicReference<String> cachedToken = new AtomicReference<>(null);
     private volatile Instant tokenExpiry = Instant.EPOCH;
 
-    // 🔁 Inject WebClient.Builder so we can stub it in tests
     public AuthClient(Kount360Properties props, WebClient.Builder builder) {
         this.props = props;
         this.http = builder.build();
     }
 
     public synchronized String getBearerToken() {
-        if (Instant.now().isBefore(tokenExpiry.minusSeconds(30)) && cachedToken.get() != null) {
+        if (now().isBefore(tokenExpiry.minusSeconds(30)) && cachedToken.get() != null) {
             return cachedToken.get();
         }
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "client_credentials");
-        form.add("client_id", props.getClientId());
-        form.add("client_secret", props.getApiKey());
 
+        // `props.getApiKey()` must already contain the Base64-encoded `clientId:clientSecret`
+        // value used after `Basic ` in the Authorization header, matching the working curl command.
         Map<String, Object> resp = http.post()
                 .uri(props.getAuthTokenUrl())
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + props.getApiKey())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(form)
+                .body(BodyInserters
+                        .fromFormData("grant_type", "client_credentials")
+                        .with("scope", "k1_integration_api"))
                 .retrieve()
                 .bodyToMono(Map.class)
                 .onErrorResume(err -> Mono.error(new RuntimeException("Auth error: " + err.getMessage(), err)))
@@ -49,8 +49,12 @@ public class AuthClient {
         }
         String token = (String) resp.get("access_token");
         Number expiresIn = (Number) resp.getOrDefault("expires_in", 300);
-        tokenExpiry = Instant.now().plusSeconds(expiresIn.longValue());
+        tokenExpiry = now().plusSeconds(expiresIn.longValue());
         cachedToken.set(token);
         return token;
+    }
+
+    protected Instant now() {
+        return Instant.now();
     }
 }
