@@ -23,7 +23,7 @@ public class OrdersClient {
     public Map<String, Object> postOrder(Map<String, Object> orderPayload) {
         String token = auth.getBearerToken();
         return http.post()
-                .uri("/commerce/v2/orders")
+                .uri("/commerce/v2/orders?riskInquiry=true")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(orderPayload)
