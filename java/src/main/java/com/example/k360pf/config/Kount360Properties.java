@@ -10,6 +10,7 @@ public class Kount360Properties {
     private String apiBaseUrl;
     private String clientId;
     private String apiKey;
+    private String publicKey;
     private String merchantId;
     private String channel;
 
@@ -30,6 +31,9 @@ public class Kount360Properties {
 
     public String getApiKey() { return apiKey; }
     public void setApiKey(String v) { this.apiKey = v; }
+
+    public String getPublicKey() { return publicKey; }
+    public void setPublicKey(String v) { this.publicKey = v; }
 
     public String getMerchantId() { return merchantId; }
     public void setMerchantId(String v) { this.merchantId = v; }
