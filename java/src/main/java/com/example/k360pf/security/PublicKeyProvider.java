@@ -1,5 +1,8 @@
 package com.example.k360pf.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.example.k360pf.client.AuthClient;
 import com.example.k360pf.config.Kount360Properties;
 import org.springframework.http.HttpHeaders;
@@ -15,17 +18,50 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 public class PublicKeyProvider {
+    private static final Logger log = LoggerFactory.getLogger(SignatureVerifier.class);
     private final Kount360Properties props;
     private final AuthClient auth;
-    private final WebClient http = WebClient.builder().build();
-    private final AtomicReference<PublicKey> cachedKey = new AtomicReference<>();
-    private volatile Instant nextRefresh = Instant.EPOCH;
+    // private final WebClient http = WebClient.builder().build();
+    // private final AtomicReference<PublicKey> cachedKey = new AtomicReference<>();
+    // private volatile Instant nextRefresh = Instant.EPOCH;
 
     public PublicKeyProvider(Kount360Properties props, AuthClient auth) {
         this.props = props;
         this.auth = auth;
     }
 
+
+    public PublicKey getPublicKey() {
+
+         if (props.getPublicKey() != null) {
+            log.info(props.getPublicKey());
+            PublicKey pk = loadPublicKey(props.getPublicKey());
+            return pk;
+         }
+        else {
+                throw new IllegalStateException("No public key configured. Set KOUNT_PUBLIC_KEY");
+         }
+    }
+    
+    /**
+     * Loads the RSA public key from base64 encoded string
+     */
+    private static PublicKey loadPublicKey(String publicKeyBase64) {
+        try {
+            byte[] keyBytes = Base64.getDecoder().decode(publicKeyBase64);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            return keyFactory.generatePublic(spec);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load public key", e);
+        }
+    }
+
+}
+
+    /*
+
+There is no public end point to get the public key. So the following logic can be used once a plublic end point is available.@interface
     public PublicKey getPublicKey() {
         if (cachedKey.get() != null && Instant.now().isBefore(nextRefresh)) {
             return cachedKey.get();
@@ -62,3 +98,5 @@ public class PublicKeyProvider {
         return KeyFactory.getInstance("RSA").generatePublic(spec);
     }
 }
+
+*/
