@@ -63,5 +63,5 @@ group :test do
 end
 
 gem "httparty", "~> 0.24.0"
-gem "jwt", "~> 2.10"
+gem "jwt", "~> 3.2"
 gem "retriable", "~> 3.1"
