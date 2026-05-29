@@ -3,5 +3,7 @@
     "python/jwt_auth/src"
   ],
   "java.compile.nullAnalysis.mode": "automatic",
-  "java.configuration.updateBuildConfiguration": "automatic"
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "dotnet.preferCSharpExtension": true,
+  "dotnet.defaultSolution": "dotnet/Kount.sln"
 }
