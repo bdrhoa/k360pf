@@ -26,7 +26,7 @@ import aiohttp
 
 # Constants
 REFRESH_TIME_BUFFER = 2 * 60  # Refresh 2 minutes before expiry
-AUTH_SERVER_URL = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token"
+AUTH_SERVER_URL = "https://login-uat.equifax.com/as/token"
 KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true"
 
 # Credentials

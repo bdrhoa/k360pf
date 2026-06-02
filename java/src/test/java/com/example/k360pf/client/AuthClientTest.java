@@ -74,7 +74,7 @@ class AuthClientTest {
     @Test
     void liveAuthCall_createsRealJwt() {
         //String authUrl = System.getenv("K360_AUTH_TOKEN_URL");
-        String authUrl = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token";
+        String authUrl = "https://login-uat.equifax.com/as/token";
         String clientId = System.getenv("KOUNT_CLIENT_ID");
         String apiKey  = System.getenv("KOUNT_API_KEY");
 

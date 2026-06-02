@@ -53,7 +53,7 @@ namespace KountJwtAuth.Services
             _httpClient = httpClient;
             _configuration = configuration;
             _logger = logger;
-            _authUrl = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token";
+            _authUrl = "https://login-uat.equifax.com/as/token";
             _apiKey = configuration["KOUNT_API_KEY"] ?? throw new ArgumentNullException("KOUNT_API_KEY");
         }
 

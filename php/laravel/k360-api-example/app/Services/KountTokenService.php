@@ -23,7 +23,7 @@ class KountTokenService
 
     public function __construct()
     {
-        $this->authUrl = 'https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token';
+        $this->authUrl = 'https://login-uat.equifax.com/as/token';
         
         // Pulls from config/services.php or directly from env()
         $this->apiKey = config('services.kount.api_key'); 

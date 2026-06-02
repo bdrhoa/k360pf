@@ -18,7 +18,7 @@ The application reads configuration from **environment variables** using Spring 
 Use the `KOUNT_` naming convention (recommended):
 
 ```bash
-export KOUNT_AUTH_TOKEN_URL="https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token"
+export KOUNT_AUTH_TOKEN_URL="https://login-uat.equifax.com/as/token"
 export KOUNT_API_BASE_URL="https://api-sandbox.kount.com"
 export KOUNT_CLIENT_ID="YOUR_CLIENT_ID"
 export KOUNT_API_KEY="YOUR_CLIENT_SECRET"

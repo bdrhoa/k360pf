@@ -3,7 +3,7 @@ require 'jwt'
 require 'retriable'
 
 class TokenManager
-  AUTH_SERVER_URL = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token"
+  AUTH_SERVER_URL = "https://login-uat.equifax.com/as/token"
   REFRESH_TIME_BUFFER = 2 * 60 # Refresh 2 minutes before expiry
   API_KEY = ENV['API_KEY']
 

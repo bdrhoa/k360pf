@@ -50,7 +50,7 @@ namespace KountJwtAuth
         public TokenService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _authUrl = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token";
+            _authUrl = "https://login-uat.equifax.com/as/token";
             _apiKey = Environment.GetEnvironmentVariable("KOUNT_API_KEY") ?? throw new ArgumentNullException("KOUNT_API_KEY");
         }
 

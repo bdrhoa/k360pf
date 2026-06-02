@@ -24,7 +24,7 @@ REFRESH_TIME_BUFFER = 2 * 60  # 2 minutes before expiry
 The number of seconds before token expiration to refresh the token.
 """
 
-AUTH_SERVER_URL = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token"
+AUTH_SERVER_URL = "https://login-uat.equifax.com/as/token"
 """
 The URL of the OAuth2 token endpoint for Kount authentication.
 """
