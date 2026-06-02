@@ -16,7 +16,7 @@ public class AuthClientRefreshVerifier {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public static void main(String[] args) throws Exception {
-        String authUrl = "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token";
+        String authUrl = "https://login-uat.equifax.com/as/token";
         String clientId = System.getenv("KOUNT_CLIENT_ID");
         String apiKey = System.getenv("KOUNT_API_KEY");
 

@@ -113,7 +113,7 @@ var TokenManager = (function () {
 
         function refreshToken() {
           axios({
-              url: "https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token",
+              url: "https://login-uat.equifax.com/as/token",
               method: "post",
               headers: {
                   authorization: "Basic " + API_KEY,

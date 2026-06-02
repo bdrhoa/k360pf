@@ -2,7 +2,7 @@ server:
   port: ${PORT:8080}
 
 kount360:
-  auth-token-url: ${KOUNT_AUTH_TOKEN_URL:${K360_AUTH_TOKEN_URL:https://login.kount.com/oauth2/ausdppkujzCPQuIrY357/v1/token}}
+  auth-token-url: ${KOUNT_AUTH_TOKEN_URL:${K360_AUTH_TOKEN_URL:https://login-uat.equifax.com/as/token}}
   api-base-url: ${KOUNT_API_BASE_URL:${K360_API_BASE_URL:https://api-sandbox.kount.com}}
   client-id: ${KOUNT_CLIENT_ID:${K360_CLIENT_ID:}}
   api-key: ${KOUNT_API_KEY:${K360_API_KEY:}}
