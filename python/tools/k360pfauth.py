@@ -20,6 +20,7 @@ Constants:
 
 import asyncio
 from datetime import datetime
+import os
 import time
 import jwt
 import aiohttp
@@ -30,9 +31,7 @@ AUTH_SERVER_URL = "https://login-uat.equifax.com/as/token"
 KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true"
 
 # Credentials
-#API_KEY = "your_api_key_here"
-#API_KEY = os.getenv("API_KEY")
-API_KEY = "MG9hMWJjNXgxcmJrd3ZlM3kzNTg6c3ZHNzZiY19SdGl6c0M1bDJiWGtBeXNyRjRuTkRONGY4YVpqaG9zUkNsTkxoRk94akJ5b3lEQVdvTklkMEU1RA=="
+API_KEY = os.getenv("API_KEY")
 
 
 class TokenManager:
