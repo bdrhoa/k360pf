@@ -18,6 +18,9 @@ class NAOClientLiveTest {
 
     @Test
     void postNewAccountOpening_liveApi_returnsResponse() {
+        Assumptions.assumeTrue("true".equalsIgnoreCase(System.getenv("KOUNT_RUN_LIVE_TESTS")),
+                "KOUNT_RUN_LIVE_TESTS=true not set; skipping live NAO test");
+
         String apiBaseUrl = "https://api-sandbox.kount.com";
         String authUrl = "https://login-uat.equifax.com/as/token";
         String clientId = System.getenv("KOUNT_CLIENT_ID");
