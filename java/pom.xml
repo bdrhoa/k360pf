@@ -12,12 +12,14 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.1</version>
+    <version>3.5.14</version>
     <relativePath/>
   </parent>
 
   <properties>
     <java.version>21</java.version>
+    <netty.version>4.1.135.Final</netty.version>
+    <tomcat.version>10.1.55</tomcat.version>
   </properties>
 
   <dependencies>
@@ -36,7 +38,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
-      <version>3.5.4</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -54,11 +55,6 @@
       <version>1.78.1</version>
     </dependency>
     -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>2.0.17.redhat-00001</version>
-    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
