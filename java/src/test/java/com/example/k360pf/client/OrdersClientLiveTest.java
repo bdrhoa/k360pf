@@ -15,6 +15,9 @@ class OrdersClientLiveTest {
 
     @Test
     void postOrder_liveApi_returnsResponse() {
+        Assumptions.assumeTrue("true".equalsIgnoreCase(System.getenv("KOUNT_RUN_LIVE_TESTS")),
+                "KOUNT_RUN_LIVE_TESTS=true not set; skipping live Orders test");
+
         String apiBaseUrl = "https://api-sandbox.kount.com";
         String authUrl = "https://login-uat.equifax.com/as/token";
         String apiKey = System.getenv("KOUNT_API_KEY");

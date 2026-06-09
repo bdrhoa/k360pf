@@ -49,6 +49,9 @@ public class KountEventsClient {
                 || decisionResponse.getCorrelationId().isBlank()) {
             throw new IllegalArgumentException("challenge-outcome requires a decision response correlationId");
         }
+        if (!decisionResponse.isChallenge()) {
+            throw new IllegalArgumentException("challenge-outcome requires a CHALLENGE decision response");
+        }
 
         Map<String, Object> eventPayload = new LinkedHashMap<>(payload);
         eventPayload.put("decisionCorrelationId", decisionResponse.getCorrelationId());

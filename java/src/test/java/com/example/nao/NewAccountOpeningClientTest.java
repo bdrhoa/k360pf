@@ -1,4 +1,4 @@
-package com.example.events;
+package com.example.nao;
 
 import com.example.k360pf.client.KountDecisionResponse;
 import com.example.k360pf.config.Kount360Properties;
@@ -20,9 +20,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class KountEventsClientTest {
+class NewAccountOpeningClientTest {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private TestHttpServer server;
@@ -35,51 +35,23 @@ class KountEventsClientTest {
     }
 
     @Test
-    void postChallengeOutcome_postsCorrelationIdFromChallengeDecision() throws Exception {
-        server = TestHttpServer.start();
-        KountEventsClient client = new KountEventsClient(() -> "test-token", props(server.baseUrl()));
+    void postNewAccountOpening_parsesChallengeCorrelationHeader() throws Exception {
         String correlationId = UUID.randomUUID().toString();
-        KountDecisionResponse challengeResponse = new KountDecisionResponse(
-                Map.of("decision", "CHALLENGE"),
-                correlationId);
+        server = TestHttpServer.start(Map.of("decision", "CHALLENGE"), correlationId);
+        NewAccountOpeningClient client = new NewAccountOpeningClient(() -> "test-token", props(server.baseUrl()));
 
-        Map<String, Object> payload = challengeOutcomePayload();
-        client.postChallengeOutcome(challengeResponse, payload);
+        KountDecisionResponse response = client.postNewAccountOpening(naoPayload());
 
-        RecordedRequest request = server.singleRequest();
-        assertEquals("POST", request.method());
-        assertEquals("/events/challenge-outcome", request.path());
-        assertEquals("Bearer test-token", request.header("Authorization"));
-        assertEquals("application/json", request.header("Content-Type"));
-        assertEquals(correlationId, request.json().get("decisionCorrelationId"));
-    }
-
-    @Test
-    void postChallengeOutcome_rejectsNonChallengeDecisionResponse() throws Exception {
-        server = TestHttpServer.start();
-        KountEventsClient client = new KountEventsClient(() -> "test-token", props(server.baseUrl()));
-        KountDecisionResponse allowResponse = new KountDecisionResponse(
-                Map.of("decision", "ALLOW"),
-                UUID.randomUUID().toString());
-
-        assertThrows(IllegalArgumentException.class,
-                () -> client.postChallengeOutcome(allowResponse, challengeOutcomePayload()));
-        assertEquals(0, server.requestCount());
-    }
-
-    @Test
-    void postFailedAttempt_postsToFailedAttemptEndpoint() throws Exception {
-        server = TestHttpServer.start();
-        KountEventsClient client = new KountEventsClient(() -> "test-token", props(server.baseUrl()));
-
-        client.postFailedAttempt(failedAttemptPayload());
+        assertEquals("CHALLENGE", response.getDecision());
+        assertTrue(response.isChallenge());
+        assertEquals(correlationId, response.getCorrelationId());
 
         RecordedRequest request = server.singleRequest();
         assertEquals("POST", request.method());
-        assertEquals("/events/failed-attempt", request.path());
+        assertEquals("/newaccountopening/v2", request.path());
         assertEquals("Bearer test-token", request.header("Authorization"));
-        assertEquals("application/json", request.header("Content-Type"));
-        assertEquals("failed-attempt-test", request.json().get("inquiryId"));
+        assertTrue(request.header("Content-Type").startsWith("application/json"));
+        assertEquals("nao-test", request.json().get("inquiryId"));
     }
 
     private static Kount360Properties props(String baseUrl) {
@@ -88,26 +60,17 @@ class KountEventsClientTest {
         return props;
     }
 
-    private static Map<String, Object> challengeOutcomePayload() {
+    private static Map<String, Object> naoPayload() {
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("inquiryId", "challenge-outcome-test");
-        payload.put("deviceSessionId", "session123");
-        payload.put("challengeType", "Captcha");
-        payload.put("challengeStatus", "Success");
-        payload.put("sentTimestamp", "2024-02-22T01:02:03.123Z");
-        payload.put("completedTimestamp", "2024-02-22T01:03:03.123Z");
-        return payload;
-    }
-
-    private static Map<String, Object> failedAttemptPayload() {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("inquiryId", "failed-attempt-test");
+        payload.put("inquiryId", "nao-test");
         payload.put("channel", "DEFAULT");
         payload.put("deviceSessionId", "session123");
         payload.put("userIp", "192.168.0.1");
-        payload.put("loginUrl", "https://www.example.com/login");
+        payload.put("accountCreationUrl", "https://www.example.com/create-account");
         payload.put("person", Map.of("emailAddress", "john.doe@example.com"));
         payload.put("account", Map.of("id", "account-123", "username", "john.doe"));
+        payload.put("strategy", Map.of("verificationTemplateName", "default"));
+        payload.put("customFields", Map.of("exampleString", "NAO Java test"));
         return payload;
     }
 
@@ -134,10 +97,10 @@ class KountEventsClientTest {
             this.httpServer = httpServer;
         }
 
-        static TestHttpServer start() throws IOException {
+        static TestHttpServer start(Map<String, Object> responseBody, String correlationId) throws IOException {
             HttpServer httpServer = HttpServer.create(new InetSocketAddress(0), 0);
             TestHttpServer server = new TestHttpServer(httpServer);
-            httpServer.createContext("/", server::handle);
+            httpServer.createContext("/", exchange -> server.handle(exchange, responseBody, correlationId));
             httpServer.start();
             return server;
         }
@@ -151,15 +114,11 @@ class KountEventsClientTest {
             return requests.getFirst();
         }
 
-        int requestCount() {
-            return requests.size();
-        }
-
         void stop() {
             httpServer.stop(0);
         }
 
-        private void handle(HttpExchange exchange) throws IOException {
+        private void handle(HttpExchange exchange, Map<String, Object> responseBody, String correlationId) throws IOException {
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
             requests.add(new RecordedRequest(
                     exchange.getRequestMethod(),
@@ -167,8 +126,9 @@ class KountEventsClientTest {
                     exchange.getRequestHeaders(),
                     body));
 
-            byte[] response = OBJECT_MAPPER.writeValueAsBytes(Map.of());
+            byte[] response = OBJECT_MAPPER.writeValueAsBytes(responseBody);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.getResponseHeaders().add("X-Correlation-Id", correlationId);
             exchange.sendResponseHeaders(200, response.length);
             try (OutputStream output = exchange.getResponseBody()) {
                 output.write(response);

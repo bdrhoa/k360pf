@@ -73,6 +73,9 @@ class AuthClientTest {
     }
     @Test
     void liveAuthCall_createsRealJwt() {
+        org.junit.jupiter.api.Assumptions.assumeTrue("true".equalsIgnoreCase(System.getenv("KOUNT_RUN_LIVE_TESTS")),
+                "KOUNT_RUN_LIVE_TESTS=true not set; skipping live auth test");
+
         //String authUrl = System.getenv("K360_AUTH_TOKEN_URL");
         String authUrl = "https://login-uat.equifax.com/as/token";
         String clientId = System.getenv("KOUNT_CLIENT_ID");
