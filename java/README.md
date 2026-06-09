@@ -8,6 +8,12 @@ Spring Boot port of the .NET Core Payments Fraud sample.
   - Sends a demo Orders API request using a bearer token (client credentials flow)
 - `POST /demo/nao`
   - Sends a demo New Account Opening V2 request using a bearer token from `BearerTokenProvider`
+- `POST /demo/login`
+  - Sends a demo Login V2 decision request using the same bearer token pattern
+- `POST /demo/events/failed-attempt`
+  - Sends a demo failed-attempt event for login flows
+- `POST /demo/events/challenge-outcome`
+  - Sends a demo challenge-outcome event for Login or NAO challenge results
 - `POST /webhooks/kount360`
   - Receives and verifies RSA-PSS signed webhooks using timestamp + payload
 
@@ -131,7 +137,108 @@ HTTP → NewAccountOpeningController → NewAccountOpeningClient → AuthClient 
 
 Expected:
 - valid JSON response from Kount
-- logs showing the NAO inquiry ID and request success
+- logs showing the NAO inquiry ID, decision, and any response correlation ID
+
+NAO decision responses are returned as:
+
+```json
+{
+  "body": { "decision": "ALLOW" },
+  "decision": "ALLOW",
+  "correlationId": null,
+  "challenge": false,
+  "allow": true,
+  "block": false
+}
+```
+
+When Kount returns `decision: "CHALLENGE"`, preserve the `correlationId` value from the `x-correlation-id` response header. Use that value as `decisionCorrelationId` when posting a later challenge-outcome event.
+
+---
+
+# Testing the Login V2 Flow
+
+## 1. Automated Tests
+
+Run without Kount credentials:
+
+```bash
+mvn test
+```
+
+The Login V2 unit tests use a local mock HTTP server. They verify:
+- `POST /login/v2`
+- `Authorization: Bearer <token>`
+- JSON request fields: `inquiryId`, `channel`, `deviceSessionId`, `userIp`, `loginUrl`, `person`, `account`, `strategy`, `customFields`
+- decision parsing for `ALLOW`, `BLOCK`, and `CHALLENGE`
+- `x-correlation-id` capture on `CHALLENGE`
+
+## 2. Web Endpoint Test
+
+Start the app, then:
+
+```bash
+curl -X POST http://localhost:8080/demo/login
+```
+
+Flow:
+
+```
+HTTP → LoginV2Controller → LoginV2Client → AuthClient → Kount Login V2 API
+```
+
+Expected:
+- valid JSON response from Kount
+- response wrapper containing the original body, extracted `decision`, and optional `correlationId`
+
+---
+
+# Testing the Events Flow
+
+## 1. Automated Tests
+
+Run without Kount credentials:
+
+```bash
+mvn test
+```
+
+The Events unit tests use a local mock HTTP server. They verify:
+- `POST /events/failed-attempt`
+- `POST /events/challenge-outcome`
+- bearer token auth
+- challenge-outcome JSON includes `decisionCorrelationId`
+
+For real flows, source `decisionCorrelationId` from a prior Login V2 or NAO response where:
+
+```json
+{
+  "decision": "CHALLENGE",
+  "correlationId": "<x-correlation-id response header>"
+}
+```
+
+## 2. Web Endpoint Tests
+
+Start the app, then:
+
+```bash
+curl -X POST http://localhost:8080/demo/events/failed-attempt
+```
+
+For challenge outcome, pass the correlation ID returned by a prior `CHALLENGE` decision response:
+
+```bash
+curl -X POST http://localhost:8080/demo/events/challenge-outcome \
+  -H "Content-Type: application/json" \
+  -d '{"decisionCorrelationId":"3438ac3c-37eb-4902-adef-ed16b4431030"}'
+```
+
+Flow:
+
+```
+HTTP → KountEventsController → KountEventsClient → AuthClient → Kount Events API
+```
 
 ---
 

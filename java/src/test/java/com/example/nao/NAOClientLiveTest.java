@@ -1,6 +1,7 @@
 package com.example.nao;
 
 import com.example.auth.AuthClient;
+import com.example.k360pf.client.KountDecisionResponse;
 import com.example.k360pf.config.Kount360Properties;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -42,13 +43,13 @@ class NAOClientLiveTest {
 
         Map<String, Object> payload = buildPayload(props);
 
-        Map<String, Object> response = naoClient.postNewAccountOpening(payload);
+        KountDecisionResponse response = naoClient.postNewAccountOpening(payload);
 
         assertNotNull(response, "NAO API response should not be null");
-        assertFalse(response.isEmpty(), "NAO API response should not be empty");
+        assertFalse(response.getBody().isEmpty(), "NAO API response should not be empty");
 
         System.out.println("Live NAO response:");
-        System.out.println(response);
+        System.out.println(response.getBody());
     }
 
     private Map<String, Object> buildPayload(Kount360Properties props) {
