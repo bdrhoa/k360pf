@@ -6,6 +6,8 @@ Spring Boot port of the .NET Core Payments Fraud sample.
 
 - `POST /demo/orders`
   - Sends a demo Orders API request using a bearer token (client credentials flow)
+- `POST /demo/nao`
+  - Sends a demo New Account Opening V2 request using a bearer token from `BearerTokenProvider`
 - `POST /webhooks/kount360`
   - Receives and verifies RSA-PSS signed webhooks using timestamp + payload
 
@@ -93,6 +95,26 @@ HTTP → OrdersController → OrdersClient → AuthClient → Kount API
 Expected:
 - valid JSON response from Kount
 - logs showing JWT usage and request success
+
+---
+
+# Testing the New Account Opening Flow
+
+Start the app, then:
+
+```bash
+curl -X POST http://localhost:8080/demo/nao
+```
+
+Flow:
+
+```
+HTTP → NewAccountOpeningController → NewAccountOpeningClient → AuthClient → Kount NAO V2 API
+```
+
+Expected:
+- valid JSON response from Kount
+- logs showing the NAO inquiry ID and request success
 
 ---
 
