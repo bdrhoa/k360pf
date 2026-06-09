@@ -1,5 +1,6 @@
 package com.example.k360pf.client;
 
+import com.example.auth.BearerTokenProvider;
 import com.example.k360pf.config.Kount360Properties;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;

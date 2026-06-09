@@ -1,4 +1,4 @@
-package com.example.k360pf.client;
+package com.example.auth;
 
 import com.example.k360pf.config.Kount360AuthProperties;
 import org.springframework.core.ParameterizedTypeReference;

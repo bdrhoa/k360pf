@@ -1,5 +1,6 @@
 package com.example.k360pf.client;
 
+import com.example.auth.AuthClient;
 import com.example.k360pf.config.Kount360Properties;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
