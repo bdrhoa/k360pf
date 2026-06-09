@@ -1,4 +1,4 @@
-package com.example.k360pf.client;
+package com.example.auth;
 
 public interface BearerTokenProvider {
     String getBearerToken();
