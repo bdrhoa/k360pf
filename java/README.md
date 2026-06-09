@@ -178,6 +178,12 @@ To run a single live test:
 KOUNT_RUN_LIVE_TESTS=true mvn -Dtest=NAOClientLiveTest test
 ```
 
+To run the live failed-attempt event test:
+
+```bash
+KOUNT_RUN_LIVE_TESTS=true mvn -Dtest=KountEventsClientLiveTest test
+```
+
 The Login V2 unit tests use a local mock HTTP server. They verify:
 - `POST /login/v2`
 - `Authorization: Bearer <token>`
