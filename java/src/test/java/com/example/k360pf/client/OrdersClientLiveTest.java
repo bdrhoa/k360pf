@@ -16,7 +16,6 @@ class OrdersClientLiveTest {
     void postOrder_liveApi_returnsResponse() {
         String apiBaseUrl = "https://api-sandbox.kount.com";
         String authUrl = "https://login-uat.equifax.com/as/token";
-        String clientId = System.getenv("KOUNT_CLIENT_ID");
         String apiKey = System.getenv("KOUNT_API_KEY");
 
 
