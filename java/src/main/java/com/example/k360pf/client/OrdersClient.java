@@ -20,10 +20,10 @@ public class OrdersClient {
             };
 
     private final WebClient http;
-    private final AuthClient auth;
+    private final BearerTokenProvider auth;
     private final Kount360Properties props;
 
-    public OrdersClient(AuthClient auth, Kount360Properties props) {
+    public OrdersClient(BearerTokenProvider auth, Kount360Properties props) {
         this.http = WebClient.builder().baseUrl(props.getApiBaseUrl()).build();
         this.auth = auth;
         this.props = props;

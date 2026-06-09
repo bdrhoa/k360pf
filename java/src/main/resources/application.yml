@@ -6,6 +6,7 @@ kount360:
   api-base-url: ${KOUNT_API_BASE_URL:${K360_API_BASE_URL:https://api-sandbox.kount.com}}
   client-id: ${KOUNT_CLIENT_ID:${K360_CLIENT_ID:}}
   api-key: ${KOUNT_API_KEY:${K360_API_KEY:}}
+  auth-scope: ${KOUNT_AUTH_SCOPE:${K360_AUTH_SCOPE:k1_integration_api}}
   public-key: ${KOUNT_PUBLIC_KEY:${K360_PUBLIC_KEY:}}
   merchant-id: ${KOUNT_MERCHANT_ID:${K360_MERCHANT_ID:}}
   channel: ${KOUNT_CHANNEL:${K360_CHANNEL:DEFAULT}}

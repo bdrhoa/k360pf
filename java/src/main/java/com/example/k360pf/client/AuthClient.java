@@ -1,6 +1,6 @@
 package com.example.k360pf.client;
 
-import com.example.k360pf.config.Kount360Properties;
+import com.example.k360pf.config.Kount360AuthProperties;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -14,36 +14,37 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
-public class AuthClient {
+public class AuthClient implements BearerTokenProvider {
     private static final ParameterizedTypeReference<Map<String, Object>> MAP_RESPONSE_TYPE =
             new ParameterizedTypeReference<>() {
             };
 
     private final WebClient http;
-    private final Kount360Properties props;
+    private final Kount360AuthProperties authProperties;
 
-    private final AtomicReference<String> cachedToken = new AtomicReference<>(null);
+    private final AtomicReference<String> cachedToken = new AtomicReference<>();
     private volatile Instant tokenExpiry = Instant.EPOCH;
 
-    public AuthClient(Kount360Properties props, WebClient.Builder builder) {
-        this.props = props;
+    public AuthClient(Kount360AuthProperties authProperties, WebClient.Builder builder) {
+        this.authProperties = authProperties;
         this.http = builder.build();
     }
 
+    @Override
     public synchronized String getBearerToken() {
         if (now().isBefore(tokenExpiry.minusSeconds(30)) && cachedToken.get() != null) {
             return cachedToken.get();
         }
 
-        // `props.getApiKey()` must already contain the Base64-encoded `clientId:clientSecret`
+        // `authProperties.getApiKey()` must already contain the Base64-encoded `clientId:clientSecret`
         // value used after `Basic ` in the Authorization header, matching the working curl command.
         Map<String, Object> resp = http.post()
-                .uri(props.getAuthTokenUrl())
-                .header(HttpHeaders.AUTHORIZATION, "Basic " + props.getApiKey())
+                .uri(authProperties.getAuthTokenUrl())
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + authProperties.getApiKey())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters
                         .fromFormData("grant_type", "client_credentials")
-                        .with("scope", "k1_integration_api"))
+                        .with("scope", authProperties.getAuthScope()))
                 .retrieve()
                 .bodyToMono(MAP_RESPONSE_TYPE)
                 .onErrorResume(err -> Mono.error(new RuntimeException("Auth error: " + err.getMessage(), err)))
