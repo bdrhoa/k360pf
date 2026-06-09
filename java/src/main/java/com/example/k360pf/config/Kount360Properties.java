@@ -5,11 +5,12 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConfigurationProperties(prefix = "kount360")
-public class Kount360Properties {
+public class Kount360Properties implements Kount360AuthProperties {
     private String authTokenUrl;
     private String apiBaseUrl;
     private String clientId;
     private String apiKey;
+    private String authScope = "k1_integration_api";
     private String publicKey;
     private String merchantId;
     private String channel;
@@ -31,6 +32,9 @@ public class Kount360Properties {
 
     public String getApiKey() { return apiKey; }
     public void setApiKey(String v) { this.apiKey = v; }
+
+    public String getAuthScope() { return authScope; }
+    public void setAuthScope(String v) { this.authScope = v; }
 
     public String getPublicKey() { return publicKey; }
     public void setPublicKey(String v) { this.publicKey = v; }

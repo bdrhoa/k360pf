@@ -3,31 +3,21 @@ package com.example.k360pf.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.example.k360pf.client.AuthClient;
 import com.example.k360pf.config.Kount360Properties;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
-import java.time.Instant;
 import java.util.Base64;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 public class PublicKeyProvider {
     private static final Logger log = LoggerFactory.getLogger(SignatureVerifier.class);
     private final Kount360Properties props;
-    private final AuthClient auth;
-    // private final WebClient http = WebClient.builder().build();
-    // private final AtomicReference<PublicKey> cachedKey = new AtomicReference<>();
-    // private volatile Instant nextRefresh = Instant.EPOCH;
 
-    public PublicKeyProvider(Kount360Properties props, AuthClient auth) {
+    public PublicKeyProvider(Kount360Properties props) {
         this.props = props;
-        this.auth = auth;
     }
 
 
