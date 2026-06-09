@@ -166,6 +166,18 @@ Run without Kount credentials:
 mvn test
 ```
 
+Live Kount tests are skipped by default. To opt in, run:
+
+```bash
+KOUNT_RUN_LIVE_TESTS=true mvn test
+```
+
+To run a single live test:
+
+```bash
+KOUNT_RUN_LIVE_TESTS=true mvn -Dtest=NAOClientLiveTest test
+```
+
 The Login V2 unit tests use a local mock HTTP server. They verify:
 - `POST /login/v2`
 - `Authorization: Bearer <token>`
