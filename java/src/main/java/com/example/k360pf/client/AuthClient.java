@@ -1,6 +1,7 @@
 package com.example.k360pf.client;
 
 import com.example.k360pf.config.Kount360Properties;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 public class AuthClient {
+    private static final ParameterizedTypeReference<Map<String, Object>> MAP_RESPONSE_TYPE =
+            new ParameterizedTypeReference<>() {
+            };
+
     private final WebClient http;
     private final Kount360Properties props;
 
@@ -40,7 +45,7 @@ public class AuthClient {
                         .fromFormData("grant_type", "client_credentials")
                         .with("scope", "k1_integration_api"))
                 .retrieve()
-                .bodyToMono(Map.class)
+                .bodyToMono(MAP_RESPONSE_TYPE)
                 .onErrorResume(err -> Mono.error(new RuntimeException("Auth error: " + err.getMessage(), err)))
                 .block();
 
