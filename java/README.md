@@ -100,6 +100,23 @@ Expected:
 
 # Testing the New Account Opening Flow
 
+## 1. Unit / Integration Test (Java)
+
+Runs the real Kount NAO V2 API:
+
+```bash
+mvn -Dtest=NAOClientLiveTest test
+```
+
+This test:
+- creates `AuthClient`
+- retrieves a real JWT through `BearerTokenProvider`
+- calls `/newaccountopening/v2`
+
+---
+
+## 2. Web Endpoint Test
+
 Start the app, then:
 
 ```bash
