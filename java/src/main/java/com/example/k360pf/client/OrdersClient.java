@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class OrdersClient {
@@ -25,7 +26,7 @@ public class OrdersClient {
     private final Kount360Properties props;
 
     public OrdersClient(BearerTokenProvider auth, Kount360Properties props) {
-        this.http = WebClient.builder().baseUrl(props.getApiBaseUrl()).build();
+        this.http = WebClient.builder().baseUrl(Objects.requireNonNull(props.getApiBaseUrl(), "apiBaseUrl")).build();
         this.auth = auth;
         this.props = props;
     }

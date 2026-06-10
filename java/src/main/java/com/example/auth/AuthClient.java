@@ -39,9 +39,9 @@ public class AuthClient implements BearerTokenProvider {
         // `authProperties.getApiKey()` must already contain the Base64-encoded `clientId:clientSecret`
         // value used after `Basic ` in the Authorization header, matching the working curl command.
         Map<String, Object> resp = http.post()
-                .uri(authProperties.getAuthTokenUrl())
+                .uri(authProperties.getAuthTokenUrl() != null ? authProperties.getAuthTokenUrl() : "")
                 .header(HttpHeaders.AUTHORIZATION, "Basic " + authProperties.getApiKey())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .body(BodyInserters
                         .fromFormData("grant_type", "client_credentials")
                         .with("scope", authProperties.getAuthScope()))

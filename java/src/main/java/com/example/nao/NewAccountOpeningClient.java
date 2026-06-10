@@ -3,6 +3,7 @@ package com.example.nao;
 import com.example.auth.BearerTokenProvider;
 import com.example.k360pf.client.KountDecisionResponse;
 import com.example.k360pf.config.Kount360Properties;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -26,7 +27,8 @@ public class NewAccountOpeningClient {
     private final Kount360Properties props;
 
     public NewAccountOpeningClient(BearerTokenProvider tokenProvider, Kount360Properties props) {
-        this(tokenProvider, props, WebClient.builder().baseUrl(props.getApiBaseUrl()).build());
+        this(tokenProvider, props,
+                WebClient.builder().baseUrl(Objects.requireNonNull(props.getApiBaseUrl(), "apiBaseUrl")).build());
     }
 
     NewAccountOpeningClient(BearerTokenProvider tokenProvider, Kount360Properties props, WebClient http) {

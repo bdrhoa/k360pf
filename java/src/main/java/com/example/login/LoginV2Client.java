@@ -6,6 +6,7 @@ import com.example.k360pf.config.Kount360Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
+import java.util.Objects;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,8 @@ public class LoginV2Client {
     private final Kount360Properties props;
 
     public LoginV2Client(BearerTokenProvider tokenProvider, Kount360Properties props) {
-        this(tokenProvider, props, WebClient.builder().baseUrl(props.getApiBaseUrl()).build());
+        this(tokenProvider, props,
+                WebClient.builder().baseUrl(Objects.requireNonNull(props.getApiBaseUrl(), "apiBaseUrl must not be null")).build());
     }
 
     LoginV2Client(BearerTokenProvider tokenProvider, Kount360Properties props, WebClient http) {
