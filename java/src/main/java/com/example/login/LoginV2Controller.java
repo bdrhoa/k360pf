@@ -70,7 +70,7 @@ public class LoginV2Controller {
                 "creationDateTime", OffsetDateTime.of(2024, 1, 1, 12, 12, 12, 0, ZoneOffset.UTC)
                         .format(DateTimeFormatter.ISO_INSTANT),
                 "username", "meoyyd8za8jdmwfm",
-                "userPassword", "38401eb46f8fbb74c1846a5f47f68d83a9bef126b1d4143f886cd464323cdaab",
+                "userPassword", "hashedpassword",
                 "accountIsActive", true
         ));
         payload.put("strategy", Map.of(
