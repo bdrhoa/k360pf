@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,16 +47,17 @@ class AuthClientTest {
             try {
                 json = objectMapper.writeValueAsString(body);
             } catch (Exception e) {
-                return Mono.error(e);
+                return Objects.requireNonNull(Mono.<ClientResponse>error(e), "errorResponse");
             }
 
             ClientResponse response = ClientResponse
                     .create(HttpStatus.OK)
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .header(HttpHeaders.CONTENT_TYPE,
+                            Objects.requireNonNull(MediaType.APPLICATION_JSON_VALUE, "applicationJsonValue"))
                     .body(json)
                     .build();
 
-            return Mono.just(response);
+            return Objects.requireNonNull(Mono.just(response), "clientResponse");
         };
 
         WebClient.Builder builder = WebClient.builder().exchangeFunction(exchangeFunction);

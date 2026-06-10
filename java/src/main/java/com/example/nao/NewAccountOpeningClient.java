@@ -47,14 +47,14 @@ public class NewAccountOpeningClient {
             KountDecisionResponse response = http.post()
                     .uri("/newaccountopening/v2")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON, "applicationJson"))
                     .bodyValue(payload)
                     .exchangeToMono(clientResponse -> {
                         if (clientResponse.statusCode().isError()) {
                             return clientResponse.createException().flatMap(reactor.core.publisher.Mono::error);
                         }
                         return clientResponse
-                                .bodyToMono(MAP_RESPONSE_TYPE)
+                                .bodyToMono(Objects.requireNonNull(MAP_RESPONSE_TYPE, "mapResponseType"))
                                 .map(body -> new KountDecisionResponse(
                                         body,
                                         clientResponse.headers().asHttpHeaders().getFirst("x-correlation-id")));

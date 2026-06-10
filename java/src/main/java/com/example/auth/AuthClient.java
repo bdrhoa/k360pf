@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
@@ -39,14 +40,18 @@ public class AuthClient implements BearerTokenProvider {
         // `authProperties.getApiKey()` must already contain the Base64-encoded `clientId:clientSecret`
         // value used after `Basic ` in the Authorization header, matching the working curl command.
         Map<String, Object> resp = http.post()
-                .uri(authProperties.getAuthTokenUrl() != null ? authProperties.getAuthTokenUrl() : "")
+                .uri(Objects.requireNonNull(
+                        authProperties.getAuthTokenUrl() != null ? authProperties.getAuthTokenUrl() : "",
+                        "authTokenUrl"))
                 .header(HttpHeaders.AUTHORIZATION, "Basic " + authProperties.getApiKey())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .contentType(Objects.requireNonNull(
+                        MediaType.APPLICATION_FORM_URLENCODED,
+                        "applicationFormUrlencoded"))
                 .body(BodyInserters
                         .fromFormData("grant_type", "client_credentials")
-                        .with("scope", authProperties.getAuthScope()))
+                        .with("scope", Objects.requireNonNull(authProperties.getAuthScope(), "authScope")))
                 .retrieve()
-                .bodyToMono(MAP_RESPONSE_TYPE)
+                .bodyToMono(Objects.requireNonNull(MAP_RESPONSE_TYPE, "mapResponseType"))
                 .onErrorResume(err -> Mono.error(new RuntimeException("Auth error: " + err.getMessage(), err)))
                 .block();
 

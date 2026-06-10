@@ -44,10 +44,10 @@ public class OrdersClient {
             Map<String, Object> response = http.post()
                     .uri("/commerce/v2/orders?riskInquiry=true")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON, "applicationJson"))
                     .bodyValue(orderPayload)
                     .retrieve()
-                    .bodyToMono(MAP_RESPONSE_TYPE)
+                    .bodyToMono(Objects.requireNonNull(MAP_RESPONSE_TYPE, "mapResponseType"))
                     .block();
 
             log.info("Kount order post succeeded. merchantOrderId={}, responseKeys={}",
