@@ -70,10 +70,10 @@ public class KountEventsClient {
             Map<String, Object> response = http.post()
                     .uri(Objects.requireNonNull(path, "path"))
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken)
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON, "applicationJson"))
                     .bodyValue(payload)
                     .retrieve()
-                    .bodyToMono(MAP_RESPONSE_TYPE)
+                    .bodyToMono(Objects.requireNonNull(MAP_RESPONSE_TYPE, "mapResponseType"))
                     .block();
 
             log.info("Kount event post succeeded. path={}, inquiryId={}, responseKeys={}",

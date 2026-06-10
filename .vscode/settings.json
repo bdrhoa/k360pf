@@ -2,6 +2,13 @@
   "python.analysis.extraPaths": [
     "python/jwt_auth/src"
   ],
+  "python.analysis.exclude": [
+    "**/.venv/**"
+  ],
+  "pylint.args": [
+    "--ignore-paths",
+    "^.*/\\.venv/.*$"
+  ],
   "java.compile.nullAnalysis.mode": "automatic",
   "java.configuration.updateBuildConfiguration": "automatic",
   "dotnet.preferCSharpExtension": true,
