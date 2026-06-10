@@ -14,12 +14,13 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class KountEventsClient {
     private static final Logger log = LoggerFactory.getLogger(KountEventsClient.class);
     private static final ParameterizedTypeReference<Map<String, Object>> MAP_RESPONSE_TYPE =
-            new ParameterizedTypeReference<>() {
+            new ParameterizedTypeReference<Map<String, Object>>() {
             };
 
     private final WebClient http;
@@ -27,8 +28,8 @@ public class KountEventsClient {
     private final Kount360Properties props;
 
     public KountEventsClient(BearerTokenProvider tokenProvider, Kount360Properties props) {
-        String baseUrl = props.getApiBaseUrl();
-        this(tokenProvider, props, WebClient.builder().baseUrl(baseUrl).build());
+        this(tokenProvider, props,
+                WebClient.builder().baseUrl(Objects.requireNonNull(props.getApiBaseUrl(), "apiBaseUrl")).build());
     }
 
     KountEventsClient(BearerTokenProvider tokenProvider, Kount360Properties props, WebClient http) {
@@ -67,7 +68,7 @@ public class KountEventsClient {
 
         try {
             Map<String, Object> response = http.post()
-                    .uri(path)
+                    .uri(Objects.requireNonNull(path, "path"))
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(payload)

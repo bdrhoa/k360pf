@@ -41,7 +41,7 @@ public class AuthClient implements BearerTokenProvider {
         Map<String, Object> resp = http.post()
                 .uri(authProperties.getAuthTokenUrl() != null ? authProperties.getAuthTokenUrl() : "")
                 .header(HttpHeaders.AUTHORIZATION, "Basic " + authProperties.getApiKey())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters
                         .fromFormData("grant_type", "client_credentials")
                         .with("scope", authProperties.getAuthScope()))
