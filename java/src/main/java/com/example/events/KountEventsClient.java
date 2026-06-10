@@ -27,7 +27,8 @@ public class KountEventsClient {
     private final Kount360Properties props;
 
     public KountEventsClient(BearerTokenProvider tokenProvider, Kount360Properties props) {
-        this(tokenProvider, props, WebClient.builder().baseUrl(props.getApiBaseUrl()).build());
+        String baseUrl = props.getApiBaseUrl();
+        this(tokenProvider, props, WebClient.builder().baseUrl(baseUrl).build());
     }
 
     KountEventsClient(BearerTokenProvider tokenProvider, Kount360Properties props, WebClient http) {
