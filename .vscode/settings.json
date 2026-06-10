@@ -9,6 +9,8 @@
     "--ignore-paths",
     "^.*/\\.venv/.*$"
   ],
+  "java.import.maven.enabled": true,
+  "java.import.maven.offline.enabled": false,
   "java.compile.nullAnalysis.mode": "automatic",
   "java.configuration.updateBuildConfiguration": "automatic",
   "dotnet.preferCSharpExtension": true,
