@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "Kount K360 Payment Fraud Monorepo",
-  "workspaces": ["api", "webhook"],
+  "workspaces": [
+    "api",
+    "webhook"
+  ],
   "scripts": {
     "dev": "nodemon",
     "start": "ts-node -r tsconfig-paths/register api/src/index.ts",
@@ -19,18 +22,20 @@
     "axios-retry": "^4.5.0",
     "express": "^4.22.2",
     "jsonwebtoken": "^9.0.2",
-    "qs": "^6.15.1",
+    "qs": "^6.15.2",
     "timers": "^0.1.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.9",
-    "typescript": "^5.0.0",
+    "nodemon": "^3.0.0",
     "ts-node": "^10.0.0",
     "ts-node-dev": "^2.0.0",
-    "nodemon": "^3.0.0"
+    "typescript": "^5.0.0"
   },
-  "_moduleDirectories": ["node_modules_custom"],
+  "_moduleDirectories": [
+    "node_modules_custom"
+  ],
   "_moduleAliases": {
     "@src": "./dist"
   }
