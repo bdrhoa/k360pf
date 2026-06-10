@@ -24,7 +24,7 @@ class AuthClientTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void getBearerToken_fetchesAndCachesToken() throws Exception {
+    void getBearerToken_fetchesAndCachesToken() {
         // Arrange: fake config
         Kount360Properties props = new Kount360Properties();
         props.setAuthTokenUrl("https://auth.example.com/oauth2/token");
@@ -54,7 +54,7 @@ class AuthClientTest {
                     .create(HttpStatus.OK)
                     .header(HttpHeaders.CONTENT_TYPE,
                             Objects.requireNonNull(MediaType.APPLICATION_JSON_VALUE, "applicationJsonValue"))
-                    .body(json)
+                    .body(Objects.requireNonNull(json, "json"))
                     .build();
 
             return Objects.requireNonNull(Mono.just(response), "clientResponse");
