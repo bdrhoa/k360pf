@@ -57,7 +57,7 @@ class KountEventsClientLiveTest {
         String deviceSessionId = UUID.randomUUID().toString().replace("-", "");
 
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("inquiryId", "failed-attempt-live-" + UUID.randomUUID());
+        payload.put("inquiryId", UUID.randomUUID().toString().replace("-", ""));
         payload.put("channel", props.getChannel());
         payload.put("deviceSessionId", deviceSessionId);
         payload.put("userIp", "192.168.0.1");
