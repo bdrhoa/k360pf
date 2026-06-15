@@ -39,6 +39,10 @@ namespace ClientDemoApp
                             .AddPolicyHandler(HttpPolicyExtensions
                                 .HandleTransientHttpError()
                                 .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
+                        services.AddHttpClient<NewAccountOpeningClient>()
+                            .AddPolicyHandler(HttpPolicyExtensions
+                                .HandleTransientHttpError()
+                                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
 
                         services.AddSingleton(TokenManager.Instance);
                     })
@@ -48,6 +52,11 @@ namespace ClientDemoApp
                 var token = await tokenService.GetValidTokenAsync();
 
                 Log.Information("Retrieved JWT Token: {Token}", token);
+
+                var naoClient = host.Services.GetRequiredService<NewAccountOpeningClient>();
+                var naoResponse = await naoClient.SubmitDemoInquiryAsync();
+                Log.Information("NAO response: {@Response}", naoResponse);
+
                 Log.Information("Press Ctrl+C to exit. Token auto-refresh will continue running.");
 
                 await Task.Delay(Timeout.Infinite);
