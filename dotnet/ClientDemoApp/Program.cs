@@ -35,14 +35,11 @@ namespace ClientDemoApp
                     {
                         services.AddSingleton<IConfiguration>(configuration);
 
+                        // Typed clients receive an HttpClient with this Polly handler applied.
                         services.AddHttpClient<TokenService>()
-                            .AddPolicyHandler(HttpPolicyExtensions
-                                .HandleTransientHttpError()
-                                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
+                            .AddPolicyHandler(GetRetryPolicy());
                         services.AddHttpClient<NewAccountOpeningClient>()
-                            .AddPolicyHandler(HttpPolicyExtensions
-                                .HandleTransientHttpError()
-                                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
+                            .AddPolicyHandler(GetRetryPolicy());
 
                         services.AddSingleton(TokenManager.Instance);
                     })
@@ -69,6 +66,20 @@ namespace ClientDemoApp
             {
                 Log.CloseAndFlush();
             }
+        }
+
+        private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .WaitAndRetryAsync(3, retryAttempt =>
+                {
+                    var exponentialDelay = TimeSpan.FromSeconds(Math.Pow(2, retryAttempt));
+                    var jitteredDelay = TimeSpan.FromMilliseconds(
+                        Random.Shared.NextDouble() * exponentialDelay.TotalMilliseconds);
+
+                    return jitteredDelay;
+                });
         }
     }
 }
