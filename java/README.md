@@ -178,6 +178,12 @@ To run a single live test:
 KOUNT_RUN_LIVE_TESTS=true mvn -Dtest=NAOClientLiveTest test
 ```
 
+To run the live Login V2 test:
+
+```bash
+KOUNT_RUN_LIVE_TESTS=true mvn -Dtest=LoginV2ClientLiveTest test
+```
+
 To run the live failed-attempt event test:
 
 ```bash
