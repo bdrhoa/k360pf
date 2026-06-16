@@ -184,6 +184,10 @@ To run the live Login V2 test:
 KOUNT_RUN_LIVE_TESTS=true mvn -Dtest=LoginV2ClientLiveTest test
 ```
 
+The live Login V2 test sends `loginUrl: "https://www.example.com/block"` to exercise a `BLOCK`
+decision. The client ID associated with `KOUNT_API_KEY` must have a policy configured to block
+that login URL; otherwise the sandbox may return another decision.
+
 To run the live failed-attempt event test:
 
 ```bash

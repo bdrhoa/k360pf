@@ -54,6 +54,9 @@ class LoginV2ClientLiveTest {
                 assertNotNull(response.getCorrelationId(),
                         "CHALLENGE response should include x-correlation-id");
             }
+            if (response.isBlock()) {
+                System.out.println("login not allowed");
+            }
 
             System.out.println("Live Login V2 response:");
             System.out.println(response.getBody());
@@ -73,7 +76,7 @@ class LoginV2ClientLiveTest {
         payload.put("channel", props.getChannel());
         payload.put("deviceSessionId", deviceSessionId);
         payload.put("userIp", "192.168.0.1");
-        payload.put("loginUrl", "https://www.example.com/login");
+        payload.put("loginUrl", "https://www.example.com/block");
         payload.put("person", Map.of(
                 "name", Map.of(
                         "first", "John",
