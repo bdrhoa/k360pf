@@ -184,9 +184,14 @@ To run the live Login V2 test:
 KOUNT_RUN_LIVE_TESTS=true mvn -Dtest=LoginV2ClientLiveTest test
 ```
 
-The live Login V2 test sends `loginUrl: "https://www.example.com/block"` to exercise a `BLOCK`
-decision. The client ID associated with `KOUNT_API_KEY` must have a policy configured to block
-that login URL; otherwise the sandbox may return another decision.
+The live Login V2 tests exercise three policy-driven login URLs:
+- `https://www.example.com/login` should return `ALLOW` and simulates login being allowed.
+- `https://www.example.com/block` should return `BLOCK` and simulates login not being allowed.
+- `https://www.example.com/challenge` should return `CHALLENGE`; challenge handling is currently
+  stubbed in the live test.
+
+The client ID associated with `KOUNT_API_KEY` must have policies configured for those URLs;
+otherwise the sandbox may return different decisions.
 
 To run the live failed-attempt event test:
 
