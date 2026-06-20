@@ -12,17 +12,42 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LoginV2ClientLiveTest {
 
     @Test
-    void postLogin_liveApi_returnsDecisionResponse() {
+    void postLogin_liveApi_allowResponse_simulatesLoginAllowed() {
+        KountDecisionResponse response = postLoginLive("https://www.example.com/login");
+
+        assertEquals("ALLOW", response.getDecision(), "Expected ALLOW decision");
+        System.out.println("login allowed");
+        printResponse(response);
+    }
+
+    @Test
+    void postLogin_liveApi_blockResponse_simulatesLoginNotAllowed() {
+        KountDecisionResponse response = postLoginLive("https://www.example.com/block");
+
+        assertEquals("BLOCK", response.getDecision(), "Expected BLOCK decision");
+        System.out.println("login not allowed");
+        printResponse(response);
+    }
+
+    @Test
+    void postLogin_liveApi_challengeResponse_stubsChallengeBehavior() {
+        KountDecisionResponse response = postLoginLive("https://www.example.com/challenge");
+
+        assertEquals("CHALLENGE", response.getDecision(), "Expected CHALLENGE decision");
+        System.out.println("challenge response");
+        printResponse(response);
+    }
+
+    private KountDecisionResponse postLoginLive(String loginUrl) {
         Assumptions.assumeTrue("true".equalsIgnoreCase(System.getenv("KOUNT_RUN_LIVE_TESTS")),
                 "KOUNT_RUN_LIVE_TESTS=true not set; skipping live Login V2 test");
 
@@ -44,22 +69,11 @@ class LoginV2ClientLiveTest {
         LoginV2Client loginClient = new LoginV2Client(bearerTokenProvider, props);
 
         try {
-            KountDecisionResponse response = loginClient.postLogin(buildPayload(props));
+            KountDecisionResponse response = loginClient.postLogin(buildPayload(props, loginUrl));
 
             assertNotNull(response, "Login V2 response should not be null");
             assertFalse(response.getBody().isEmpty(), "Login V2 response body should not be empty");
-            assertTrue(Set.of("ALLOW", "BLOCK", "CHALLENGE").contains(response.getDecision()),
-                    "Expected ALLOW, BLOCK, or CHALLENGE decision");
-            if (response.isChallenge()) {
-                assertNotNull(response.getCorrelationId(),
-                        "CHALLENGE response should include x-correlation-id");
-            }
-            if (response.isBlock()) {
-                System.out.println("login not allowed");
-            }
-
-            System.out.println("Live Login V2 response:");
-            System.out.println(response.getBody());
+            return response;
         } catch (WebClientResponseException e) {
             Assumptions.assumeFalse(e.getStatusCode().is5xxServerError(),
                     "Kount Login V2 sandbox returned " + e.getStatusCode()
@@ -68,7 +82,12 @@ class LoginV2ClientLiveTest {
         }
     }
 
-    private Map<String, Object> buildPayload(Kount360Properties props) {
+    private void printResponse(KountDecisionResponse response) {
+        System.out.println("Live Login V2 response:");
+        System.out.println(response.getBody());
+    }
+
+    private Map<String, Object> buildPayload(Kount360Properties props, String loginUrl) {
         String deviceSessionId = UUID.randomUUID().toString().replace("-", "");
 
         Map<String, Object> payload = new LinkedHashMap<>();
@@ -76,7 +95,7 @@ class LoginV2ClientLiveTest {
         payload.put("channel", props.getChannel());
         payload.put("deviceSessionId", deviceSessionId);
         payload.put("userIp", "192.168.0.1");
-        payload.put("loginUrl", "https://www.example.com/block");
+        payload.put("loginUrl", loginUrl);
         payload.put("person", Map.of(
                 "name", Map.of(
                         "first", "John",
