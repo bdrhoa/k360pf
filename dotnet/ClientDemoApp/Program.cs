@@ -40,6 +40,8 @@ namespace ClientDemoApp
                             .AddPolicyHandler(GetRetryPolicy());
                         services.AddHttpClient<NewAccountOpeningClient>()
                             .AddPolicyHandler(GetRetryPolicy());
+                        services.AddHttpClient<PaymentFraudClient>()
+                            .AddPolicyHandler(GetRetryPolicy());
 
                         services.AddSingleton(TokenManager.Instance);
                     })
@@ -53,6 +55,10 @@ namespace ClientDemoApp
                 var naoClient = host.Services.GetRequiredService<NewAccountOpeningClient>();
                 var naoResponse = await naoClient.SubmitDemoInquiryAsync();
                 Log.Information("NAO response: {@Response}", naoResponse);
+
+                var paymentFraudClient = host.Services.GetRequiredService<PaymentFraudClient>();
+                var orderResponse = await paymentFraudClient.EvaluateDemoOrderAsync();
+                Log.Information("Payment Fraud Evaluate Order response: {@Response}", orderResponse);
 
                 Log.Information("Press Ctrl+C to exit. Token auto-refresh will continue running.");
 

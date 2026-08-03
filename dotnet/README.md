@@ -1,11 +1,11 @@
 # Kount 360 .NET Example
 
-This folder contains a .NET 8 solution that demonstrates Kount 360 authentication, New Account Opening (NAO), and webhook signature verification.
+This folder contains a .NET 8 solution that demonstrates Kount 360 authentication, New Account Opening (NAO), Payment Fraud order evaluation, and webhook signature verification.
 
 ## Projects
 
 - `KountJwtAuth`: shared library for JWT token management and webhook signature verification.
-- `ClientDemoApp`: console app that gets a Kount access token and submits a demo NAO V2 inquiry.
+- `ClientDemoApp`: console app that gets a Kount access token, submits a demo NAO V2 inquiry, and evaluates a demo Payment Fraud order.
 - `KountWebhook`: ASP.NET Core webhook receiver that verifies Kount webhook signatures.
 - `KountJwtAuth.Tests` and `KountWebhook.Tests`: unit tests for the shared library and webhook receiver.
 
@@ -31,6 +31,8 @@ export KOUNT_CHANNEL="DEFAULT"
 export KOUNT_CLIENT_ID="your-client-id"
 ```
 
+`KOUNT_CHANNEL` also sets the channel on the Payment Fraud order. It defaults to `DEFAULT`.
+
 Set this environment variable before running webhook signature verification:
 
 ```bash
@@ -45,21 +47,21 @@ From this `dotnet` folder:
 dotnet run --project ClientDemoApp/ClientDemoApp.csproj
 ```
 
-`ClientDemoApp` writes its output to a rolling Serilog file named `kount.log` in the directory where the app is run. The app does not print the NAO response to the terminal, so check the log file to see the token refresh, NAO request, NAO response, and any retry-related failures.
+`ClientDemoApp` writes its output to a rolling Serilog file named `kount.log` in the directory where the app is run. The app does not print API responses to the terminal, so check the log file to see the token refresh, NAO request and response, Payment Fraud request and response, and any retry-related failures.
 
 ```bash
 tail -f kount.log
 ```
 
-The app keeps running after the first NAO call so token auto-refresh can continue. Stop it with `Ctrl+C`.
+The app evaluates the order with `POST /commerce/v2/orders?riskInquiry=true`, after the NAO call. It then keeps running so token auto-refresh can continue. Stop it with `Ctrl+C`.
 
 ## How Polly Is Used
 
 `ClientDemoApp` uses Polly through `Microsoft.Extensions.Http.Polly` and typed `HttpClient` registration in `Program.cs`.
 
-Both `TokenService` and `NewAccountOpeningClient` are registered with `AddHttpClient(...).AddPolicyHandler(GetRetryPolicy())`. That means the retry behavior is applied by dependency injection when each typed client receives its `HttpClient`.
+`TokenService`, `NewAccountOpeningClient`, and `PaymentFraudClient` are registered with `AddHttpClient(...).AddPolicyHandler(GetRetryPolicy())`. That means the retry behavior is applied by dependency injection when each typed client receives its `HttpClient`.
 
-`NewAccountOpeningClient` does not create or call Polly directly. That is intentional: the client builds and sends the NAO request, while `Program.cs` owns cross-cutting HTTP behavior such as retries.
+The API clients do not create or call Polly directly. They build and send their requests, while `Program.cs` owns cross-cutting HTTP behavior such as retries.
 
 The retry policy handles transient HTTP errors using Polly's `HttpPolicyExtensions.HandleTransientHttpError()`, then retries three times with exponential backoff and jitter:
 
