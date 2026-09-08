@@ -20,9 +20,9 @@
   "dependencies": {
     "axios": "^1.16.1",
     "axios-retry": "^4.5.0",
-    "express": "^4.22.2",
+    "express": "^5.2.1",
     "jsonwebtoken": "^9.0.2",
-    "qs": "^6.15.2",
+    "qs": "^6.16.0",
     "timers": "^0.1.1"
   },
   "devDependencies": {
