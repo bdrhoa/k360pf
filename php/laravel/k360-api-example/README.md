@@ -1,86 +1,136 @@
-# Kount360 API & Webhook Laravel Integration
+# Kount 360 API and webhook example for Laravel
 
-This project is a Laravel 11 application demonstrating a robust, enterprise-grade integration with the Kount360 API. It features secure JWT authentication, proactive token caching, and an RSA-PSS signed webhook receiver.
+This Laravel 12 application demonstrates two Kount 360 integration flows:
 
-## Features
-* **Proactive JWT Caching:** Background worker ensures API tokens are always fresh and ready in memory.
-* **Resilient API Communication:** Built-in exponential backoff and jitter for handling network blips or rate limits.
-* **Secure Webhooks:** Utilizes `phpseclib` to verify incoming Kount webhooks against strict RSA-PSS cryptographic signatures.
-* **Dedicated Logging:** All Kount-related events (token refreshes, webhook payloads, crypto failures) are isolated in `storage/logs/kount-YYYY-MM-DD.log`.
+- obtaining and caching an OAuth access token with the client-credentials grant; and
+- receiving a webhook and verifying its RSA-PSS SHA-256 signature before processing the JSON payload.
 
----
+The token refresh command runs every 15 minutes through Laravel's scheduler. The token service refreshes a cached token when it is missing or within two minutes of expiry and uses a cache lock to prevent concurrent refreshes.
 
-## ⚙️ Configuration & Environment Variables
+> [!WARNING]
+> This is example code, not a production-ready application. It currently writes access tokens, token responses, public-key material, webhook signatures, and raw webhook bodies to the console or logs. Remove or redact those statements before using real credentials or customer data.
 
-This application requires two primary Kount credentials:
-1. `KOUNT_API_KEY`: The base64-encoded string used for Basic Auth to generate your JWT.
-2. `KOUNT_PUBLIC_KEY`: The base64-encoded raw DER public key used to verify incoming webhook signatures.
+## Requirements
 
-You can configure these in one of two ways:
+- PHP 8.4 or later
+- [Composer](https://getcomposer.org/)
+- A Kount API credential for the UAT environment
+- The base64-encoded DER public key corresponding to the key Kount uses to sign webhooks
+- Node.js and npm only if you want to build or serve the starter-page assets
 
-### Option A: The Project `.env` File (Standard)
-Copy the `.env.example` file to `.env` and add your keys to the bottom. This is the standard approach for isolated applications.
+The authentication endpoint is currently fixed to Kount UAT in `app/Services/KountTokenService.php`.
 
-    KOUNT_API_KEY=your_base64_api_key_here
-    KOUNT_PUBLIC_KEY=your_base64_public_key_here
+## Installation
 
-### Option B: System-Level Variables (Advanced/Shared)
-If you are running multiple applications on the same server (e.g., sharing these keys with a Symfony demo), you can export them directly in your system's shell profile (like `~/.zshenv` or `~/.bash_profile`). 
+From this directory, install the PHP dependencies and create the local environment file:
 
-    export KOUNT_API_KEY="your_base64_api_key_here"
-    export KOUNT_PUBLIC_KEY="your_base64_public_key_here"
+```sh
+composer install
+cp .env.example .env
+php artisan key:generate
+touch database/database.sqlite
+php artisan migrate
+```
 
-*Note: Laravel will automatically inherit system-level environment variables. If a variable exists at the system level, it will override whatever is written in the local `.env` file. You must restart your PHP server (`php artisan serve`) after updating system variables.*
+To install and build the optional frontend assets:
 
----
+```sh
+npm install
+npm run build
+```
 
-## 🔐 Authentication & JWT Caching Explained
+Alternatively, `composer run setup` performs the dependency installation, environment-file creation, key generation, database migration, and frontend build in one command. It requires both Composer and npm.
 
-Kount issues JSON Web Tokens (JWTs) that expire after 20 minutes. Instead of fetching a new token on every single web request (which adds massive latency), this application utilizes a **Proactive Caching Strategy**.
+## Configuration
 
-The `KountTokenService` stores the active JWT in Laravel's Cache. When your application needs to talk to Kount, it instantly pulls the token from memory. 
+Set these values in `.env`:
 
-To prevent the token from ever expiring, a scheduled Artisan command (`kount:refresh-token`) runs in the background. 
-* It checks the cache every 15 minutes.
-* If the token is nearing expiration, it uses an atomic cache lock to ensure only one process reaches out to Kount.
-* It securely fetches a new token, updates the cache, and logs the rotation.
+```dotenv
+KOUNT_API_KEY="base64-encoded-client-credential"
+KOUNT_PUBLIC_KEY="base64-encoded-DER-public-key"
+```
 
----
+`KOUNT_API_KEY` is passed as the credential portion of the HTTP `Authorization: Basic ...` header when requesting a token. Do not include the literal `Basic ` prefix. `KOUNT_PUBLIC_KEY` must contain the base64 representation of the raw DER public key used to verify webhook signatures.
 
-## ⏱️ Setting Up the Background Job (Token Refresh)
+The default `.env.example` uses SQLite and Laravel's database-backed cache, queue, and session stores. Run the migrations before invoking the token command so the cache and cache-lock tables exist.
 
-To keep the JWT cache warm, you must tell Laravel to execute its Task Scheduler. How you do this depends on your environment.
+Never commit `.env` or real credentials. After changing environment values in a running or config-cached application, restart the process and clear cached configuration:
 
-### Local & Testing Environments
-When developing on your local machine, you do not need to configure a system-level cron job. Laravel provides a dedicated worker command that stays alive in your terminal and executes tasks as they come due.
+```sh
+php artisan config:clear
+```
 
-Open a dedicated terminal tab, navigate to the project root, and run:
+## Running the example
 
-    php artisan schedule:work
+Start the local web server:
 
-*Leave this tab running in the background. It will automatically fire the refresh command every 15 minutes.*
+```sh
+php artisan serve
+```
 
-### Production Environments
-In a production environment (like a Linux server), you should rely on the operating system's Cron scheduler. You only need to add a single entry to your server's crontab that pings Laravel every minute. Laravel handles the 15-minute timing internally.
+The webhook receiver is available at:
 
-Run `crontab -e` on your server and add the following line:
+```text
+POST http://127.0.0.1:8000/api/kount360-webhook-receiver
+```
 
-    * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
+It requires `X-Event-Timestamp` and `X-Event-Signature` headers. The signature must be base64 encoded and must verify over the exact concatenation of the timestamp header and raw request body. Timestamps outside the verifier's five-minute window are rejected.
 
----
+Kount-specific output is written to daily files under `storage/logs/kount-*.log`.
 
-## 🪝 Testing Webhooks Locally
+### Refreshing a token
 
-This application includes a webhook receiver at `/api/kount360-webhook-receiver` that strictly verifies X-Event-Signatures using RSA-PSS padding.
+Run one token retrieval or cache check with:
 
-To test this locally from Kount's servers, use a secure tunnel (like Cloudflare) to expose your local environment:
+```sh
+php artisan kount:refresh-token
+```
 
-1. Start your Laravel server:
+For a continuous manual exercise of the caching and refresh behavior, use:
 
-    php artisan serve
+```sh
+php artisan kount:refresh-token --daemon
+```
 
-2. Start your Cloudflare tunnel (forcing HTTP to avoid SSL panics in PHP):
+The daemon checks every 30 seconds and runs until interrupted. Both forms make a live request when no usable token is cached and therefore require a valid `KOUNT_API_KEY` and network access.
 
-    cloudflared tunnel --url http://127.0.0.1:8000
+### Running the scheduler
 
-3. Copy the resulting `.trycloudflare.com` URL, append your API route (`/api/kount360-webhook-receiver`), and configure it in the Kount dashboard. Monitor `storage/logs/kount-*.log` to see real-time verification results!
+For local development, keep this command running in a separate terminal:
+
+```sh
+php artisan schedule:work
+```
+
+In a deployed environment, arrange for `php artisan schedule:run` to execute once per minute. Laravel will dispatch `kount:refresh-token` every 15 minutes.
+
+## Testing
+
+Install dependencies, then run the automated test suite:
+
+```sh
+composer test
+```
+
+The current suite contains only the default Laravel unit assertion and a feature test that checks the home page returns HTTP 200. It does **not** test `KountTokenService`, webhook signature verification, replay-window handling, or webhook response behavior. Passing it should not be treated as validation of the Kount integration.
+
+Useful additional checks are:
+
+```sh
+composer validate --no-check-publish
+./vendor/bin/pint --test
+composer audit
+```
+
+At the time of this review, Composer validation and the dependency audit pass. The Pint check reports pre-existing style differences in the Kount services, controller, command, logging configuration, and route files.
+
+To confirm the webhook route's required-header validation while the server is running:
+
+```sh
+curl -i -X POST \
+  -H 'Content-Type: application/json' \
+  --data '{"newValue":"APPROVE"}' \
+  http://127.0.0.1:8000/api/kount360-webhook-receiver
+```
+
+The unsigned request should return HTTP 400 with a missing-timestamp error. A successful end-to-end webhook test requires an authentic Kount-signed payload whose timestamp is within the accepted window. If Kount must reach a local machine, expose the local HTTP server through a trusted HTTPS tunnel and configure the resulting `/api/kount360-webhook-receiver` URL in Kount.
