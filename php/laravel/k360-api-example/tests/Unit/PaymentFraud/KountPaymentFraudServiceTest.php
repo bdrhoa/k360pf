@@ -1,9 +1,9 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\PaymentFraud;
 
-use App\Services\KountPaymentFraudService;
 use App\Services\KountTokenService;
+use App\Services\PaymentFraud\KountPaymentFraudService;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Mockery;

@@ -1,8 +1,9 @@
 # Kount 360 API and webhook example for Laravel
 
-This Laravel 12 application demonstrates three Kount 360 integration flows:
+This Laravel 12 application demonstrates four Kount 360 integration flows:
 
 - obtaining and caching an OAuth access token with the client-credentials grant;
+- submitting an Account Protection New Account Opening V2 inquiry;
 - evaluating and updating Payments Fraud orders; and
 - receiving a webhook and verifying its RSA-PSS SHA-256 signature before processing the JSON payload.
 
@@ -51,11 +52,15 @@ KOUNT_API_KEY="base64-encoded-client-credential"
 KOUNT_PUBLIC_KEY="base64-encoded-DER-public-key"
 KOUNT_CACHE_STORE=file
 KOUNT_API_BASE_URL="https://api-sandbox.kount.com"
+KOUNT_CLIENT_ID=
+KOUNT_CHANNEL=DEFAULT
 ```
 
 `KOUNT_API_KEY` is passed as the credential portion of the HTTP `Authorization: Basic ...` header when requesting a token. Do not include the literal `Basic ` prefix. `KOUNT_PUBLIC_KEY` must contain the base64 representation of the raw DER public key used to verify webhook signatures.
 
 The Kount token uses Laravel's file-backed cache by default, independently of the application's default cache store. Set `KOUNT_CACHE_STORE` to another configured store, such as `redis`, when appropriate for a multi-instance deployment.
+
+`KOUNT_CHANNEL` identifies the website, application, or product that originated an Account Protection inquiry. `KOUNT_CLIENT_ID` is optional and is included in the NAO demo's `sharedContext` only when configured.
 
 Never commit `.env` or real credentials. After changing environment values in a running or config-cached application, restart the process and clear cached configuration:
 
@@ -80,6 +85,41 @@ POST http://127.0.0.1:8000/api/kount360-webhook-receiver
 It requires `X-Event-Timestamp` and `X-Event-Signature` headers. The signature must be base64 encoded and must verify over the exact concatenation of the timestamp header and raw request body. Timestamps outside the verifier's five-minute window are rejected.
 
 Kount-specific output is written to daily files under `storage/logs/kount-*.log`.
+
+### Finding each product example
+
+Payments Fraud and Account Protection are deliberately kept in separate PHP namespaces and directories. Authentication remains shared because both products use the same Kount bearer token.
+
+```text
+app/
+├── Http/Controllers/
+│   ├── AccountProtection/NewAccountOpeningController.php
+│   └── PaymentFraud/PaymentFraudController.php
+└── Services/
+    ├── AccountProtection/KountNewAccountOpeningService.php
+    ├── PaymentFraud/KountPaymentFraudService.php
+    └── KountTokenService.php
+```
+
+Future Account Protection examples, such as Login, belong beside the NAO classes rather than in the Payments Fraud directories.
+
+### Account Protection: New Account Opening
+
+Submit the built-in New Account Opening V2 demo with:
+
+```sh
+curl --request POST \
+  --url 'http://127.0.0.1:8000/api/account-protection/new-account-opening/demo' \
+  --header 'Accept: application/json'
+```
+
+The controller generates unique `inquiryId` and `deviceSessionId` values and builds the person, account, strategy, custom-field, and optional shared-context data demonstrated by the other Kount examples. The service posts the payload to `/newaccountopening/v2` using the shared cached JWT.
+
+The response keeps the complete Kount body, exposes the top-level decision and `X-Correlation-Id`, and provides `challenge`, `allow`, and `block` convenience flags. Preserve the correlation ID when handling a `CHALLENGE` so later challenge activity can be tied to the inquiry.
+
+Connection failures and HTTP 403, 408, 429, 500, 502, 503, and 504 responses are retried up to three attempts with exponential backoff and jitter. Other API errors are returned as failures rather than converted into an allow decision.
+
+See Kount's [New Account Opening Request V2](https://api.kount.com/newaccountopening/help#operation/NewAccountOpeningService_NewAccountOpeningV2) documentation for the complete contract. The API requires `inquiryId` and `deviceSessionId`; the generated device session ID should be replaced by the same value used by the client-side Device Data Collector in a real integration.
 
 ### Payments Fraud order flow
 
@@ -203,7 +243,7 @@ Install dependencies, then run the automated test suite:
 composer test
 ```
 
-The suite includes isolated HTTP tests for the Payments Fraud bearer token, query parameters, payload cleanup, URL encoding, validation, and order update flow. It does **not** make a live Kount request or test `KountTokenService`, webhook signature verification, replay-window handling, or webhook response behavior. Passing it should not be treated as end-to-end validation of the Kount integration.
+The suite includes isolated HTTP tests for the New Account Opening and Payments Fraud bearer tokens, NAO response metadata and retry behavior, Payments Fraud query parameters, payload cleanup, URL encoding, validation, and order update flow. It does **not** make a live Kount request or test `KountTokenService`, webhook signature verification, replay-window handling, or webhook response behavior. Passing it should not be treated as end-to-end validation of the Kount integration.
 
 Useful additional checks are:
 

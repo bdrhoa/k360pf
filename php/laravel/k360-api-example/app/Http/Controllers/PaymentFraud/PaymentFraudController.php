@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\PaymentFraud;
 
-use App\Services\KountPaymentFraudService;
+use App\Http\Controllers\Controller;
+use App\Services\PaymentFraud\KountPaymentFraudService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Exceptions\HttpResponseException;

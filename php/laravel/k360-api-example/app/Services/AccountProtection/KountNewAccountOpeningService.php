@@ -1,54 +1,51 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\AccountProtection;
 
+use App\Services\KountTokenService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
-class KountPaymentFraudService
+class KountNewAccountOpeningService
 {
     public function __construct(private readonly KountTokenService $tokenService) {}
 
     /**
-     * Evaluate an order and request a Payments Fraud risk inquiry.
+     * Submit a New Account Opening V2 inquiry.
      *
-     * @return array<string, mixed>
+     * @return array{
+     *     body: array<string, mixed>,
+     *     decision: mixed,
+     *     correlationId: ?string,
+     *     challenge: bool,
+     *     allow: bool,
+     *     block: bool
+     * }
      */
-    public function evaluateOrder(
-        array $order,
-        bool $excludeDevice = false,
-        bool $excludeFromPaymentsModel = false,
-    ): array {
-        $response = $this->client()
-            ->withQueryParameters([
-                'riskInquiry' => 'true',
-                'excludeDevice' => $excludeDevice ? 'true' : 'false',
-                'excludeFromPaymentsModel' => $excludeFromPaymentsModel ? 'true' : 'false',
-            ])
-            ->post($this->ordersUrl(), $this->withoutEmptyValues($order));
-
-        $response->throw();
-
-        return $response->json();
-    }
-
-    /**
-     * Add post-authorization or later lifecycle data to an existing order.
-     *
-     * @return array<string, mixed>
-     */
-    public function updateOrder(string $orderId, array $update): array
+    public function submit(array $payload): array
     {
-        $response = $this->client()->patch(
-            $this->ordersUrl().'/'.rawurlencode($orderId),
-            $this->withoutEmptyValues($update),
+        $response = $this->client()->post(
+            $this->newAccountOpeningUrl(),
+            $this->withoutEmptyValues($payload),
         );
 
         $response->throw();
 
-        return $response->json();
+        $body = $response->json();
+        $body = is_array($body) ? $body : [];
+        $decision = $body['decision'] ?? null;
+        $normalizedDecision = is_string($decision) ? strtoupper($decision) : null;
+
+        return [
+            'body' => $body,
+            'decision' => $decision,
+            'correlationId' => $response->header('X-Correlation-Id'),
+            'challenge' => $normalizedDecision === 'CHALLENGE',
+            'allow' => $normalizedDecision === 'ALLOW',
+            'block' => $normalizedDecision === 'BLOCK',
+        ];
     }
 
     private function client(): PendingRequest
@@ -67,21 +64,20 @@ class KountPaymentFraudService
                     }
 
                     return $exception instanceof RequestException
-                        && in_array($exception->response->status(), [408, 429, 500, 502, 503, 504], true);
+                        && in_array($exception->response->status(), [403, 408, 429, 500, 502, 503, 504], true);
                 },
                 throw: false,
             );
     }
 
-    private function ordersUrl(): string
+    private function newAccountOpeningUrl(): string
     {
         return rtrim((string) config('services.kount.api_base_url'), '/')
-            .'/commerce/v2/orders';
+            .'/newaccountopening/v2';
     }
 
     /**
-     * Kount recommends omitting properties that have no value. Keep meaningful
-     * false and zero values while removing nulls, blank strings, and empty arrays.
+     * Omit values that are not populated while preserving meaningful false and zero values.
      *
      * @return array<mixed>
      */

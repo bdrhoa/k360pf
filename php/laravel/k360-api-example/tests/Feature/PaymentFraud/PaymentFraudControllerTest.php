@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\PaymentFraud;
 
-use App\Services\KountPaymentFraudService;
+use App\Services\PaymentFraud\KountPaymentFraudService;
 use Mockery;
 use Tests\TestCase;
 
