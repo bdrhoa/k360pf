@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountProtection\LoginController;
 use App\Http\Controllers\AccountProtection\NewAccountOpeningController;
 use App\Http\Controllers\KountWebhookController;
 use App\Http\Controllers\PaymentFraud\PaymentFraudController;
@@ -17,4 +18,5 @@ Route::post('/payment-fraud/orders/evaluate', [PaymentFraudController::class, 'e
 Route::patch('/payment-fraud/orders/{orderId}', [PaymentFraudController::class, 'update']);
 
 // Account Protection
+Route::post('/account-protection/login/demo', [LoginController::class, 'demo']);
 Route::post('/account-protection/new-account-opening/demo', [NewAccountOpeningController::class, 'demo']);

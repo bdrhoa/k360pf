@@ -1,8 +1,9 @@
 # Kount 360 API and webhook example for Laravel
 
-This Laravel 12 application demonstrates four Kount 360 integration flows:
+This Laravel 12 application demonstrates five Kount 360 integration flows:
 
 - obtaining and caching an OAuth access token with the client-credentials grant;
+- submitting an Account Protection Login V2 inquiry;
 - submitting an Account Protection New Account Opening V2 inquiry;
 - evaluating and updating Payments Fraud orders; and
 - receiving a webhook and verifying its RSA-PSS SHA-256 signature before processing the JSON payload.
@@ -93,15 +94,35 @@ Payments Fraud and Account Protection are deliberately kept in separate PHP name
 ```text
 app/
 ├── Http/Controllers/
+│   ├── AccountProtection/LoginController.php
 │   ├── AccountProtection/NewAccountOpeningController.php
 │   └── PaymentFraud/PaymentFraudController.php
 └── Services/
+    ├── AccountProtection/KountLoginService.php
     ├── AccountProtection/KountNewAccountOpeningService.php
     ├── PaymentFraud/KountPaymentFraudService.php
     └── KountTokenService.php
 ```
 
-Future Account Protection examples, such as Login, belong beside the NAO classes rather than in the Payments Fraud directories.
+Account Protection examples belong beside each other rather than in the Payments Fraud directories.
+
+### Account Protection: Login
+
+Submit the built-in Login V2 demo with:
+
+```sh
+curl --request POST \
+  --url 'http://127.0.0.1:8000/api/account-protection/login/demo' \
+  --header 'Accept: application/json'
+```
+
+The controller generates unique 32-character `inquiryId` and `deviceSessionId` values without UUID hyphens and builds the person, account, MFA strategy, and custom-field data demonstrated by the Java example. The service posts the payload to `/login/v2` using the shared cached JWT. In a real integration, submit a Login inquiry only after the end user's credentials are valid, and replace the generated device session ID with the same value used by the client-side Device Data Collector.
+
+The response keeps the complete Kount body, exposes the top-level decision and `X-Correlation-Id`, and provides `challenge`, `allow`, and `block` convenience flags. Preserve the correlation ID when handling a `CHALLENGE` so a later challenge-outcome event can be tied to the Login inquiry. Report invalid credentials through Kount's Failed Attempt endpoint rather than through Login.
+
+Connection failures and HTTP 403, 408, 429, 500, 502, 503, and 504 responses are retried up to three attempts with exponential backoff and jitter. Other API errors are returned as failures rather than converted into an allow decision.
+
+See Kount's [Login Request V2](https://api.kount.com/login/help#operation/LoginService_LoginV2) documentation for the complete contract. The API requires `inquiryId` and `deviceSessionId`; when an `account` object is supplied, it requires `id` and `username`.
 
 ### Account Protection: New Account Opening
 
@@ -243,7 +264,7 @@ Install dependencies, then run the automated test suite:
 composer test
 ```
 
-The suite includes isolated HTTP tests for the New Account Opening and Payments Fraud bearer tokens, NAO response metadata and retry behavior, Payments Fraud query parameters, payload cleanup, URL encoding, validation, and order update flow. It does **not** make a live Kount request or test `KountTokenService`, webhook signature verification, replay-window handling, or webhook response behavior. Passing it should not be treated as end-to-end validation of the Kount integration.
+The suite includes isolated HTTP tests for the Login, New Account Opening, and Payments Fraud bearer tokens; Login and NAO response metadata and retry behavior; Payments Fraud query parameters, payload cleanup, URL encoding, validation, and order update flow. It does **not** make a live Kount request or test `KountTokenService`, webhook signature verification, replay-window handling, or webhook response behavior. Passing it should not be treated as end-to-end validation of the Kount integration.
 
 Useful additional checks are:
 
