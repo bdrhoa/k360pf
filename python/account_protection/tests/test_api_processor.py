@@ -41,7 +41,9 @@ def test_build_demo_payload_matches_nao_v2_contract(monkeypatch):
 
     payload = api_processor.build_demo_payload()
 
-    assert payload["inquiryId"].startswith("nao-")
+    assert len(payload["inquiryId"]) == 32
+    assert set(payload["inquiryId"]) <= set("0123456789abcdef")
+    assert "-" not in payload["inquiryId"]
     assert len(payload["deviceSessionId"]) == 32
     assert payload["channel"] == "ACME_WEB"
     assert payload["accountCreationUrl"] == "https://www.example.com/create-account"
@@ -60,6 +62,29 @@ def test_build_demo_payload_omits_shared_context_without_client_id(monkeypatch):
     payload = api_processor.build_demo_payload()
 
     assert "sharedContext" not in payload
+
+
+def test_build_login_demo_payload_matches_login_v2_contract(monkeypatch):
+    monkeypatch.setenv("KOUNT_CHANNEL", "ACME_WEB")
+
+    payload = api_processor.build_login_demo_payload()
+
+    assert len(payload["inquiryId"]) == 32
+    assert set(payload["inquiryId"]) <= set("0123456789abcdef")
+    assert "-" not in payload["inquiryId"]
+    assert len(payload["deviceSessionId"]) == 32
+    assert payload["channel"] == "ACME_WEB"
+    assert payload["loginUrl"] == "https://www.example.com/login"
+    assert payload["person"]["emailAddress"] == "john.doe@example.com"
+    assert payload["account"] == {
+        "id": "meoyyd8za8jdmwfm",
+        "type": "VIP",
+        "creationDateTime": "2024-01-01T12:12:12.000Z",
+        "username": "meoyyd8za8jdmwfm",
+        "userPassword": "hashedpassword",
+        "accountIsActive": True,
+    }
+    assert payload["strategy"]["mfaTemplateName"] == "default"
 
 
 def test_request_posts_bearer_token_and_preserves_correlation_id(monkeypatch):
@@ -156,3 +181,29 @@ def test_request_does_not_retry_validation_error(monkeypatch):
 
     assert error.value.status == 400
     assert len(session.requests) == 1
+
+
+def test_login_request_uses_login_endpoint_and_preserves_correlation_id():
+    session = FakeSession(
+        [
+            FakeResponse(
+                200,
+                {"decision": "BLOCK"},
+                {"X-Correlation-Id": "login-correlation-123"},
+            )
+        ]
+    )
+
+    response = asyncio.run(
+        api_processor.make_kount_api_request(
+            session,
+            {"inquiryId": "login-test", "deviceSessionId": "session123"},
+            token_provider=lambda: "test-token",
+            endpoint="https://example.test/login/v2",
+        )
+    )
+
+    assert response["decision"] == "BLOCK"
+    assert response["block"] is True
+    assert response["correlationId"] == "login-correlation-123"
+    assert session.requests[0]["url"] == "https://example.test/login/v2"
