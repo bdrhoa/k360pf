@@ -40,6 +40,8 @@ namespace ClientDemoApp
                             .AddPolicyHandler(GetRetryPolicy());
                         services.AddHttpClient<NewAccountOpeningClient>()
                             .AddPolicyHandler(GetRetryPolicy());
+                        services.AddHttpClient<LoginV2Client>()
+                            .AddPolicyHandler(GetRetryPolicy());
                         services.AddHttpClient<PaymentFraudClient>()
                             .AddPolicyHandler(GetRetryPolicy());
 
@@ -55,6 +57,10 @@ namespace ClientDemoApp
                 var naoClient = host.Services.GetRequiredService<NewAccountOpeningClient>();
                 var naoResponse = await naoClient.SubmitDemoInquiryAsync();
                 Log.Information("NAO response: {@Response}", naoResponse);
+
+                var loginClient = host.Services.GetRequiredService<LoginV2Client>();
+                var loginResponse = await loginClient.SubmitDemoLoginAsync();
+                Log.Information("Login V2 response: {@Response}", loginResponse);
 
                 var paymentFraudClient = host.Services.GetRequiredService<PaymentFraudClient>();
                 var orderResponse = await paymentFraudClient.EvaluateDemoOrderAsync();
