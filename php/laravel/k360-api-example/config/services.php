@@ -37,6 +37,10 @@ return [
     'kount' => [
         'api_key' => env('KOUNT_API_KEY'),
         'public_key' => env('KOUNT_PUBLIC_KEY'),
+        'cache_store' => env('KOUNT_CACHE_STORE', 'file'),
+        'api_base_url' => env('KOUNT_API_BASE_URL', 'https://api-sandbox.kount.com'),
+        'timeout_seconds' => env('KOUNT_API_TIMEOUT_SECONDS', 10),
+        'connect_timeout_seconds' => env('KOUNT_API_CONNECT_TIMEOUT_SECONDS', 3),
     ],
 
 ];
