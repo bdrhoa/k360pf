@@ -1,0 +1,11 @@
+# Editable install of the shared JWT authentication library
+--editable ../jwt_auth
+
+# Server and HTTP client
+aiohttp
+fastapi
+tenacity
+uvicorn
+
+# Tests
+pytest
