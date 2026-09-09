@@ -430,3 +430,6 @@ packages/
 /php/k360-api-example/storage/framework/views/
 /php/k360-api-example/storage/logs/
 /php/k360-api-example/vendor/
+
+#Java app
+/java/.settings/org.eclipse.m2e.core.prefs
