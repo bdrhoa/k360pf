@@ -2,7 +2,7 @@
  * Usage Instructions:
  * 
  * 1. Install dependencies:
- *    npm install express axios axios-retry jsonwebtoken timers
+ *    npm install
  * 
  * 2. Set required environment variables:
  *    - KOUNT_API_KEY: Your API key for authentication.
@@ -24,12 +24,11 @@ import express from 'express';
 import type { Request, Response } from 'express';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
-import jwt from 'jsonwebtoken';
-import { setTimeout } from 'timers/promises';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
 import crypto from 'crypto';
+import { TokenManager } from '@kount/k360-jwt-auth';
 
 
 const app = express();
@@ -88,8 +87,6 @@ function simulateCreditCardAuthorization(merchantOrderId: string): Authorization
 // Constants For API
 const API_KEY = process.env.KOUNT_API_KEY;
 const KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true";
-const RETRY_INTERVAL = 10000; // 10 seconds
-const REFRESH_BUFFER = 120; // 2 minutes before expiration
 
 // Consts For Webhook
 const WEBHOOK_URL = "https://api-sandbox.kount.com/commerce/v2/webhooks";
@@ -117,67 +114,7 @@ axiosRetry(axios, {
         [403, 408, 429, 500, 502, 503, 504].includes(error.response?.status || 0),
 });
 
-class TokenManager {
-    private static instance: TokenManager;
-    private accessToken: string | null = null;
-    private expiresAt: number = 0;
-
-    private constructor() {
-        this.refreshTokenLoop();
-    }
-
-    public static getInstance(): TokenManager {
-        if (!TokenManager.instance) {
-            TokenManager.instance = new TokenManager();
-        }
-        return TokenManager.instance;
-    }
-
-    public async getAccessToken(): Promise<string> {
-        if (!this.accessToken || Date.now() / 1000 >= this.expiresAt - REFRESH_BUFFER) {
-            await this.refreshToken();
-        }
-        return this.accessToken as string;
-    }
-
-    private async refreshToken(): Promise<void> {
-      try {
-          const response = await axios({
-              url: `https://login-uat.equifax.com/as/token`,
-              method: "post",
-              headers: {
-                  authorization: `Basic ${API_KEY}`,
-              },
-              params: {
-                  grant_type: "client_credentials",
-                  scope: "k1_integration_api",
-              },
-          });
-  
-          this.accessToken = response.data.access_token;
-          const decoded: any = this.accessToken ? jwt.decode(this.accessToken) : null;
-          this.expiresAt = decoded?.exp ?? Date.now() / 1000 + 3600;
-  
-          console.log("Token obtained:", this.accessToken);
-      } catch (error: any) {
-          logError(`Failed to fetch token: ${error}`);
-      }
-   }
-
-    private async refreshTokenLoop(): Promise<void> {
-        while (true) {
-            const waitTime = Math.max((this.expiresAt - Date.now() / 1000 - REFRESH_BUFFER) * 1000, RETRY_INTERVAL);
-            await setTimeout(waitTime);
-            try {
-                await this.refreshToken();
-            } catch (error) {
-                logError(`Failed to fetch token: ${error}`);
-            }
-        }
-    }
-}
-
-const tokenManager = TokenManager.getInstance();
+const tokenManager = TokenManager.getInstance({ apiKey: API_KEY, logError });
 
 app.post('/process-transaction', async (req, res) => {
     try {

@@ -433,3 +433,7 @@ packages/
 
 #Java app
 /java/.settings/org.eclipse.m2e.core.prefs
+
+# The local TypeScript JWT package is consumed from its compiled output.
+!typescript/jwt_auth/dist/
+!typescript/jwt_auth/dist/**

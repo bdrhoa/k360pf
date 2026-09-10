@@ -3,7 +3,7 @@
  * Usage Instructions:
  *
  * 1. Install dependencies:
- *    npm install express axios axios-retry jsonwebtoken timers
+ *    npm install
  *
  * 2. Set required environment variables:
  *    - KOUNT_API_KEY: Your API key for authentication.
@@ -39,11 +39,10 @@ exports.simulateCreditCardAuthorization = simulateCreditCardAuthorization;
 const express_1 = __importDefault(require("express"));
 const axios_1 = __importDefault(require("axios"));
 const axios_retry_1 = __importDefault(require("axios-retry"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const promises_1 = require("timers/promises");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto_1 = __importDefault(require("crypto"));
+const k360_jwt_auth_1 = require("@kount/k360-jwt-auth");
 const app = (0, express_1.default)();
 app.use(express_1.default.json({
     verify: (req, res, buf) => {
@@ -79,8 +78,6 @@ function simulateCreditCardAuthorization(merchantOrderId) {
 // Constants For API
 const API_KEY = process.env.KOUNT_API_KEY;
 const KOUNT_API_ENDPOINT = "https://api-sandbox.kount.com/commerce/v2/orders?riskInquiry=true";
-const RETRY_INTERVAL = 10000; // 10 seconds
-const REFRESH_BUFFER = 120; // 2 minutes before expiration
 // Consts For Webhook
 const WEBHOOK_URL = "https://api-sandbox.kount.com/commerce/v2/webhooks";
 const publicKeyBase64 = process.env.KOUNT_PUBLIC_KEY;
@@ -102,67 +99,7 @@ if (!API_KEY) {
     retryDelay: axios_retry_1.default.exponentialDelay,
     retryCondition: (error) => { var _a; return [403, 408, 429, 500, 502, 503, 504].includes(((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) || 0); },
 });
-class TokenManager {
-    constructor() {
-        this.accessToken = null;
-        this.expiresAt = 0;
-        this.refreshTokenLoop();
-    }
-    static getInstance() {
-        if (!TokenManager.instance) {
-            TokenManager.instance = new TokenManager();
-        }
-        return TokenManager.instance;
-    }
-    getAccessToken() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!this.accessToken || Date.now() / 1000 >= this.expiresAt - REFRESH_BUFFER) {
-                yield this.refreshToken();
-            }
-            return this.accessToken;
-        });
-    }
-    refreshToken() {
-        return __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            try {
-                const response = yield (0, axios_1.default)({
-                    url: `https://login-uat.equifax.com/as/token`,
-                    method: "post",
-                    headers: {
-                        authorization: `Basic ${API_KEY}`,
-                    },
-                    params: {
-                        grant_type: "client_credentials",
-                        scope: "k1_integration_api",
-                    },
-                });
-                this.accessToken = response.data.access_token;
-                const decoded = this.accessToken ? jsonwebtoken_1.default.decode(this.accessToken) : null;
-                this.expiresAt = (_a = decoded === null || decoded === void 0 ? void 0 : decoded.exp) !== null && _a !== void 0 ? _a : Date.now() / 1000 + 3600;
-                console.log("Token obtained:", this.accessToken);
-            }
-            catch (error) {
-                logError(`Failed to fetch token: ${error}`);
-            }
-        });
-    }
-    refreshTokenLoop() {
-        return __awaiter(this, void 0, void 0, function* () {
-            while (true) {
-                const waitTime = Math.max((this.expiresAt - Date.now() / 1000 - REFRESH_BUFFER) * 1000, RETRY_INTERVAL);
-                yield (0, promises_1.setTimeout)(waitTime);
-                try {
-                    yield this.refreshToken();
-                }
-                catch (error) {
-                    logError(`Failed to fetch token: ${error}`);
-                }
-            }
-        });
-    }
-}
-const tokenManager = TokenManager.getInstance();
+const tokenManager = k360_jwt_auth_1.TokenManager.getInstance({ apiKey: API_KEY, logError });
 app.post('/process-transaction', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const payload = JSON.parse(JSON.stringify(req.body));

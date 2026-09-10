@@ -18,16 +18,14 @@
   "author": "Kount",
   "license": "ISC",
   "dependencies": {
+    "@kount/k360-jwt-auth": "file:../jwt_auth",
     "axios": "^1.16.1",
     "axios-retry": "^4.5.0",
     "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.2",
-    "qs": "^6.16.0",
-    "timers": "^0.1.1"
+    "qs": "^6.16.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
-    "@types/jsonwebtoken": "^9.0.9",
     "nodemon": "^3.0.0",
     "ts-node": "^10.0.0",
     "ts-node-dev": "^2.0.0",
