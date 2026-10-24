@@ -15,13 +15,33 @@ The token refresh command runs every 15 minutes through Laravel's scheduler. The
 
 ## Requirements
 
-- PHP 8.4 or later
+- PHP 8.4.27 or later in the 8.4 branch, or PHP 8.5.12 or later in the 8.5 branch
 - [Composer](https://getcomposer.org/)
 - A Kount API credential for the UAT environment
 - The base64-encoded DER public key corresponding to the key Kount uses to sign webhooks
 - Node.js and npm only if you want to build or serve the starter-page assets
 
 The authentication endpoint is currently fixed to Kount UAT in `app/Services/KountTokenService.php`.
+
+### PHP security updates
+
+The minimum PHP patch versions include the fixes for CVE-2026-109618 and CVE-2026-109619, which can allow unauthenticated remote code execution. See the [official PHP security advisory](https://www.php.net/archive/2026.php#2026-10-21-5). Keep PHP updated within either supported branch.
+
+Upgrade the PHP runtime used by the web server, CLI, scheduler, and queue workers, then restart the affected services and workers. Changing the Composer requirement does not upgrade the runtime. After upgrading, check the installed dependencies against the actual runtime:
+
+```sh
+php -v
+composer check-platform-reqs
+composer audit --locked
+```
+
+Following [PHP's current guidance](https://www.php.net/), disable session upload progress in the server's `php.ini` or PHP-FPM pool configuration and restart all workers:
+
+```ini
+session.upload_progress.enabled=0
+```
+
+Apply this setting before request parsing; setting it with `ini_set()` in application code is too late. Keep it disabled until PHP announces a fix for the additional session-related issue (CVE-2026-115560). This setting supplements the runtime upgrade.
 
 ## Installation
 
