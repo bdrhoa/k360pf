@@ -437,3 +437,4 @@ packages/
 # The local TypeScript JWT package is consumed from its compiled output.
 !typescript/jwt_auth/dist/
 !typescript/jwt_auth/dist/**
+Support/Claude/claude_desktop_config.json
